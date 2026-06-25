@@ -61,6 +61,6 @@
     "@semantic-release/npm": "^12.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.8.1"
   }
 }
