@@ -14,7 +14,8 @@ This guide explains how to set up the project, contribute code, report issues, a
 
 ## Project Resources
 
-* **Homepage/ Docs:** https://arven-lashen.onrender.com
+* **Homepage:** https://arven-lashen.onrender.com
+* **Docs:** https://arven-lashen.onrender.com/docs/introduction
 * **Architecture:** https://github.com/Lashen1227/arven/blob/main/ARCHITECTURE.md
 * **Issue Tracker:** https://github.com/Lashen1227/arven/issues
 * **Discussion:** https://github.com/Lashen1227/arven/discussions

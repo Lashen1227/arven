@@ -15,6 +15,11 @@
     "pretest": "npm run build",
     "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
   "keywords": [
     "env",
     "env-example",
@@ -33,6 +38,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Lashen1227/arven.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lashen1227/arven/issues"
   },
   "dependencies": {
     "chalk": "^5.3.0",
