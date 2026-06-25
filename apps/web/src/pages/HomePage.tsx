@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
-
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
+
+import { useVersion } from "../hooks/use-version";
+import { useNpmDownloads } from "../hooks/use-npm-downloads";
+import { Box, Check, Copy, Github } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function HomePage() {
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const command = "npm install -g arven";
+
+  const versionQuery = useVersion();
+  const npmDownloadsQuery = useNpmDownloads();
 
   const starsQuery = useQuery({
     queryKey: ["github-stars", "Lashen1227", "arven"],
@@ -49,14 +54,19 @@ export function HomePage() {
             }`}
             style={{ transitionDelay: "0ms" }}
           >
-            <span>v1.0 🎉</span>
-            {/* <span className="flex items-center gap-2">
-              <Box className="h-4 w-4" />
-              9.8k
-            </span> */}
-            {/* <span className="flex items-center gap-2">
-              <Github className="h-4 w-4" /> {starsQuery.data ?? "…"}
-            </span> */}
+            {versionQuery.data && <span>{versionQuery.data} 🎉</span>}
+            {/* {npmDownloadsQuery.data && (
+              <span className="flex items-center gap-1">
+                <Box className="h-4 w-4" />
+                {npmDownloadsQuery.data}
+              </span>
+            )} */}
+
+            {/* {starsQuery.data && (
+              <span className="flex items-center gap-1">
+                <Github className="h-4 w-4" /> {starsQuery.data}
+              </span>
+            )} */}
           </div>
 
           <h1
@@ -98,9 +108,12 @@ export function HomePage() {
             <Link className="transition-colors hover:text-zinc-900" to="/docs/introduction">
               [docs]
             </Link>
-            {/* <a className="transition-colors hover:text-zinc-900" href="#npm">
+            <a
+              className="transition-colors hover:text-zinc-900"
+              href="https://www.npmjs.com/package/arven"
+            >
               [npm]
-            </a> */}
+            </a>
             <a
               className="transition-colors hover:text-zinc-900"
               href="https://github.com/Lashen1227/arven"

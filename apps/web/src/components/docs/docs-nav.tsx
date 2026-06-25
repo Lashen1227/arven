@@ -2,6 +2,7 @@ export type DocsSlug =
   | "introduction"
   | "installation"
   | "getting-started"
+  | "contributing"
   | "commands"
   | "the-guard"
   | "what-arven-detects"
@@ -26,6 +27,7 @@ export const docsNavGroups: DocsNavGroup[] = [
       { label: "Introduction", slug: "introduction", href: "/docs/introduction" },
       { label: "Installation", slug: "installation", href: "/docs/installation" },
       { label: "Getting Started", slug: "getting-started", href: "/docs/getting-started" },
+      { label: "Contributing", slug: "contributing", href: "/docs/contributing" },
     ],
   },
   {
