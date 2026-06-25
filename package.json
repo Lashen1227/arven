@@ -1,5 +1,5 @@
 {
-  "name": "arven",
+  "name": "@lashen/arven",
   "version": "0.0.0-development",
   "description": "Watches over your env vars — scan & generate .env.example on every commit",
   "type": "module",
