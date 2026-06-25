@@ -4,6 +4,7 @@ import { HomePage } from "./pages/HomePage";
 import { CommandsPage } from "./pages/docs/commands";
 import { CiIntegrationPage } from "./pages/docs/ci-integration";
 import { FAQPage } from "./pages/docs/faq";
+import { ContributingPage } from "./pages/docs/contributing";
 import { GettingStartedPage } from "./pages/docs/getting-started";
 import { InstallationPage } from "./pages/docs/installation";
 import { IntroductionPage } from "./pages/docs/introduction";
@@ -18,6 +19,7 @@ export function App() {
       <Route path="/docs/introduction" element={<IntroductionPage />} />
       <Route path="/docs/installation" element={<InstallationPage />} />
       <Route path="/docs/getting-started" element={<GettingStartedPage />} />
+      <Route path="/docs/contributing" element={<ContributingPage />} />
       <Route path="/docs/commands" element={<CommandsPage />} />
       <Route path="/docs/the-guard" element={<TheGuardPage />} />
       <Route path="/docs/what-arven-detects" element={<WhatArvenDetectsPage />} />
