@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useVersion } from "../hooks/use-version";
 import { Check, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -9,25 +9,7 @@ export function HomePage() {
   const [mounted, setMounted] = useState(false);
   const command = "npm install -g arven";
 
-  const starsQuery = useQuery({
-    queryKey: ["github-stars", "Lashen1227", "arven"],
-    queryFn: async () => {
-      const response = await fetch("https://api.github.com/repos/Lashen1227/arven", {
-        headers: {
-          Accept: "application/vnd.github+json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to load GitHub stars");
-      }
-
-      const data = (await response.json()) as { stargazers_count?: number };
-      return typeof data.stargazers_count === "number" ? data.stargazers_count : null;
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
+  const versionQuery = useVersion();
 
   const copyCommand = async () => {
     await navigator.clipboard.writeText(command);
@@ -49,12 +31,12 @@ export function HomePage() {
             }`}
             style={{ transitionDelay: "0ms" }}
           >
-            <span>v1.0 🎉</span>
-            {/* <span className="flex items-center gap-2">
+            <span>{versionQuery.data ?? "…"} 🎉</span>
+            {/* <span className="flex items-center gap-1">
               <Box className="h-4 w-4" />
               9.8k
             </span> */}
-            {/* <span className="flex items-center gap-2">
+            {/* <span className="flex items-center gap-1">
               <Github className="h-4 w-4" /> {starsQuery.data ?? "…"}
             </span> */}
           </div>
