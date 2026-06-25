@@ -93,7 +93,7 @@ export function DocsLayout({ activeSlug, toc, children }: DocsLayoutProps) {
               </span>
               <span className="text-[1.05rem] text-zinc-500">arven/docs</span>
             </Link>
-            <span className="text-sm text-zinc-400">{versionQuery.data ?? "…"}</span>
+            {versionQuery.data && <span className="text-sm text-zinc-400">{versionQuery.data}</span>}
           </div>
           <DocsSidebar activeSlug={activeSlug} />
         </aside>
@@ -116,7 +116,7 @@ export function DocsLayout({ activeSlug, toc, children }: DocsLayoutProps) {
                 <span className="text-base text-zinc-500">arven/docs</span>
               </Link>
             </div>
-            <span className="text-sm text-zinc-400">{versionQuery.data ?? "…"}</span>
+            {versionQuery.data && <span className="text-sm text-zinc-400">{versionQuery.data}</span>}
           </header>
 
           <div className="px-6 py-10 sm:px-8 lg:px-16 lg:py-16">

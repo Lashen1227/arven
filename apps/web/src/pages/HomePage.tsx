@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useVersion } from "../hooks/use-version";
+import { useNpmDownloads } from "../hooks/use-npm-downloads";
 import { Box, Check, Copy, Github } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -11,6 +12,7 @@ export function HomePage() {
   const command = "npm install -g arven";
 
   const versionQuery = useVersion();
+  const npmDownloadsQuery = useNpmDownloads();
 
   const starsQuery = useQuery({
     queryKey: ["github-stars", "Lashen1227", "arven"],
@@ -52,14 +54,19 @@ export function HomePage() {
             }`}
             style={{ transitionDelay: "0ms" }}
           >
-            <span>{versionQuery.data ?? "…"} 🎉</span>
-            {/* <span className="flex items-center gap-1">
-              <Box className="h-4 w-4" />
-              9.8k
-            </span> */}
-            {/* <span className="flex items-center gap-1">
-              <Github className="h-4 w-4" /> {starsQuery.data ?? "…"}
-            </span> */}
+            {versionQuery.data && <span>{versionQuery.data} 🎉</span>}
+            {/* {npmDownloadsQuery.data && (
+              <span className="flex items-center gap-1">
+                <Box className="h-4 w-4" />
+                {npmDownloadsQuery.data}
+              </span>
+            )} */}
+
+            {/* {starsQuery.data && (
+              <span className="flex items-center gap-1">
+                <Github className="h-4 w-4" /> {starsQuery.data}
+              </span>
+            )} */}
           </div>
 
           <h1

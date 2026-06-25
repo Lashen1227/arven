@@ -19,7 +19,7 @@ export function ContributingPage() {
     <DocsLayout activeSlug={activeSlug} toc={toc}>
       <div className="space-y-12">
         <header className="space-y-3">
-          <p className="text-sm text-zinc-400">Getting Started</p>
+          <p className="text-sm text-zinc-400">Contributing</p>
           <h1 className="text-2xl font-normal tracking-[-0.04em] text-zinc-900 sm:text-3xl">
             Contributing to arven
           </h1>

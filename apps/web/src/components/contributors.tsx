@@ -46,10 +46,11 @@ function ContributorAvatar({ contributor }: { contributor: GitHubContributor }) 
 export function Contributors() {
   const query = useQuery<GitHubContributor[]>({
     queryKey: ["contributors", "Lashen1227", "arven"],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await fetch(
         "https://api.github.com/repos/Lashen1227/arven/contributors?per_page=100",
         {
+          signal,
           headers: { Accept: "application/vnd.github+json" },
         }
       );
