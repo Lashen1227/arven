@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { useVersion } from "../hooks/use-version";
-import { Check, Copy } from "lucide-react";
+import { Box, Check, Copy, Github } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function HomePage() {
@@ -10,6 +11,26 @@ export function HomePage() {
   const command = "npm install -g arven";
 
   const versionQuery = useVersion();
+
+  const starsQuery = useQuery({
+    queryKey: ["github-stars", "Lashen1227", "arven"],
+    queryFn: async () => {
+      const response = await fetch("https://api.github.com/repos/Lashen1227/arven", {
+        headers: {
+          Accept: "application/vnd.github+json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load GitHub stars");
+      }
+
+      const data = (await response.json()) as { stargazers_count?: number };
+      return typeof data.stargazers_count === "number" ? data.stargazers_count : null;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
   const copyCommand = async () => {
     await navigator.clipboard.writeText(command);
@@ -80,9 +101,12 @@ export function HomePage() {
             <Link className="transition-colors hover:text-zinc-900" to="/docs/introduction">
               [docs]
             </Link>
-            {/* <a className="transition-colors hover:text-zinc-900" href="#npm">
+            <a
+              className="transition-colors hover:text-zinc-900"
+              href="https://www.npmjs.com/package/arven"
+            >
               [npm]
-            </a> */}
+            </a>
             <a
               className="transition-colors hover:text-zinc-900"
               href="https://github.com/Lashen1227/arven"
