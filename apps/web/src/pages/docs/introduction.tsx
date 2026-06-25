@@ -22,8 +22,9 @@ export function IntroductionPage() {
             </h1>
           </div>
           <p className="max-w-3xl text-[15px] leading-8 text-zinc-700">
-            arven is a CLI tool that watches over your environment variables across every commit. It
-            scans your codebase, auto-generates a documented{" "}
+            From the Welsh <em>arven</em>, meaning "to oversee" or "to keep watch," arven watches
+            over your env vars so you never forget to document them. It scans your codebase,
+            auto-generates a documented{" "}
             <code className="rounded bg-zinc-100 px-1.5 py-0.5">.env.example</code>, and silently
             guards every git commit, blocking it the moment a new env var goes undocumented.
           </p>

@@ -6,7 +6,7 @@ const toc = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Blocked commit", href: "#blocked-commit" },
   { label: "Works everywhere", href: "#works-everywhere" },
-  { label: "Bypassing", href: "#bypassing" },
+  { label: "Bypassing the hook", href: "#bypassing" },
 ];
 
 export function TheGuardPage() {
