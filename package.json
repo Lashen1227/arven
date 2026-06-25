@@ -1,7 +1,7 @@
 {
   "name": "arven",
-  "version": "1.0.0",
-  "description": "Watches over your env vars — scan, generate, and guard .env.example on every commit",
+  "version": "0.0.0-development",
+  "description": "Watches over your env vars — scan & generate .env.example on every commit",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,13 +13,17 @@
     "dev": "tsc --watch",
     "test": "node --test dist/tests/arven.test.js",
     "pretest": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "semantic-release": "semantic-release"
   },
   "files": [
     "dist",
     "bin",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "env",
     "env-example",
