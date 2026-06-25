@@ -128,8 +128,25 @@ npm run build`}</DocsCodeBlock>
           </p>
           <p>
             Feature requests, documentation contributions, and code style improvements
-            are all welcome. When in doubt, open an issue or discussion before investing
-            significant development time.
+            are all welcome. When in doubt, open an{" "}
+            <a
+              href="https://github.com/Lashen1227/arven/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-dotted underline-offset-2 hover:decoration-solid active:decoration-solid text-zinc-800"
+            >
+              issue
+            </a>{" "}
+            or{" "}
+            <a
+              href="https://github.com/Lashen1227/arven/discussions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-dotted underline-offset-2 hover:decoration-solid active:decoration-solid text-zinc-800"
+            >
+              discussion
+            </a>{" "}
+            before investing significant development time.
           </p>
         </DocsSection>
 
