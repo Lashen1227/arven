@@ -25,7 +25,7 @@ export function InstallationPage() {
         <DocsSection id="requirements" title="Requirements">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-900">
-              Node.js 18 or higher
+              Node.js 20 or higher
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-900">
               npm / npx
@@ -37,7 +37,7 @@ export function InstallationPage() {
         </DocsSection>
 
         <DocsSection id="global-install" title="Global Install">
-          <DocsCodeBlock>{`npm install -g arven`}</DocsCodeBlock>
+          <DocsCodeBlock>{`npm install -g @lashen-martino/arven`}</DocsCodeBlock>
         </DocsSection>
 
         <DocsSection id="without-install" title="Or use without installing">

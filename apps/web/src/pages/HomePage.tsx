@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 export function HomePage() {
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const command = "npm install -g arven";
+  const command = "npm install -g @lashen-martino/arven";
 
   const versionQuery = useVersion();
   const npmDownloadsQuery = useNpmDownloads();
@@ -81,17 +81,17 @@ export function HomePage() {
           </h1>
 
           <div
-            className={`mx-auto mt-7 max-w-xs transition-all duration-700 ease-out ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
+className={`mx-auto mt-7 w-fit transition-all duration-700 ease-out ${
+               mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+             }`}
             style={{ transitionDelay: "760ms" }}
           >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-0 rounded-sm border border-dashed border-zinc-300 bg-white px-7 py-2 text-left font-mono text-xs text-zinc-700">
+            <div className="flex items-center rounded-sm border border-dashed gap-8 border-zinc-300 bg-white py-2 pl-2 text-left font-mono text-xs text-zinc-700">
               <span>{command}</span>
               <button
                 type="button"
                 onClick={copyCommand}
-                className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm text-zinc-400 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+                className="inline-flex cursor-pointer items-center justify-center rounded-sm p-1 text-zinc-400 transition-colors hover:border-zinc-300 hover:text-zinc-900"
                 aria-label="Copy install command"
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -110,7 +110,7 @@ export function HomePage() {
             </Link>
             <a
               className="transition-colors hover:text-zinc-900"
-              href="https://www.npmjs.com/package/arven"
+              href="https://www.npmjs.com/package/@lashen-martino/arven"
             >
               [npm]
             </a>
