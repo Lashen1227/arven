@@ -33,6 +33,11 @@ jobs:
       - name: Build package
         run: npm run build
 
+      - name: Debug npm auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc && npm whoami && echo "TOKEN IS VALID" || echo "TOKEN IS INVALID"
+
       - name: Run semantic release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
