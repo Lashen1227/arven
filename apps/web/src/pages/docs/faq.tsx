@@ -46,8 +46,8 @@ export function FAQPage() {
         </DocsSection>
 
         <DocsSection id="removal" title="How do I remove arven completely?">
-          <DocsCodeBlock>{`arven uninstall   # removes the hook
-npm uninstall -g arven`}</DocsCodeBlock>
+          <DocsCodeBlock>{`arven uninstall   # removes only the hook
+npm uninstall -g @lashen-martino/arven   # removes globally`}</DocsCodeBlock>
         </DocsSection>
 
         <DocsSection id="no-verify" title="Does arven work with git commit --no-verify?">

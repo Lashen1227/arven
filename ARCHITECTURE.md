@@ -283,7 +283,7 @@ Source Files (.ts / .js / .vue / .svelte)
 ## Design Decisions
 
 **Why Node's built-in test runner?**
-Zero additional dependencies. `node --test` is available in Node 18+ which is already the minimum engine requirement.
+Zero additional dependencies. `node --test` is available in Node 20+ which is already the minimum engine requirement.
 
 **Why `glob` for file discovery?**
 Handles ignore patterns cleanly with a battle-tested API. The alternative (manual `fs.readdir` recursion) would require significantly more code and edge-case handling.
@@ -327,7 +327,7 @@ dist/**/*.js   + .d.ts + .js.map + .d.ts.map
      │
      │  npm publish
      ▼
-registry → npm install -g arven → arven CLI available globally
+registry → npm install -g @lashen-martino/arven → arven CLI available globally
 ```
 
 The `dist/` folder is what gets published to npm. Source TypeScript files are excluded via `.npmignore` (or the `files` field in `package.json` if added).

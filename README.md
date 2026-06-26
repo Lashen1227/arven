@@ -29,7 +29,7 @@ It scans your codebase, generates a structured `.env.example`, and installs a Gi
 Install arven globally using npm:
 
 ```bash
-npm install -g arven
+npm install -g @lashen-martino/arven
 ```
 
 After installation, the `arven` command will be available in your terminal.
@@ -50,18 +50,6 @@ This command will:
 * Scan your codebase for environment variables
 * Generate a `.env.example` file
 * Start protecting future commits automatically
-
----
-
-## Usage
-
-### Initialize a Project
-
-```bash
-arven init
-```
-
-Installs the Git hook and generates the initial `.env.example`.
 
 ---
 

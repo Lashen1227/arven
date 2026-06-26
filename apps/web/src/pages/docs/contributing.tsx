@@ -32,7 +32,7 @@ export function ContributingPage() {
           <p>Before contributing, ensure you have the following installed:</p>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-900">
-              Node.js 18 or later
+              Node.js 20 or later
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm leading-6 text-blue-900">
               npm 9 or later
@@ -44,13 +44,9 @@ export function ContributingPage() {
         </DocsSection>
 
         <DocsSection id="setup" title="Setting Up the Development Environment">
-          <ol className="space-y-4 pl-6">
+          <ol className="list-decimal space-y-4 pl-6">
             <li>Fork the repository to your GitHub account.</li>
-            <li>
-              Clone your fork:
-              <DocsCodeBlock>{`git clone https://github.com/<your-username>/arven.git
-cd arven`}</DocsCodeBlock>
-            </li>
+            <li>Clone your fork.</li>
             <li>
               Install dependencies:
               <DocsCodeBlock>{`npm install`}</DocsCodeBlock>
@@ -71,21 +67,15 @@ cd arven`}</DocsCodeBlock>
         </DocsSection>
 
         <DocsSection id="making-changes" title="Making Changes">
-          <ol className="space-y-4 pl-6">
-            <li>
-              Create a new branch from the latest main branch:
-              <DocsCodeBlock>{`git checkout -b feature/my-new-feature`}</DocsCodeBlock>
-            </li>
+          <ol className="list-decimal space-y-4 pl-10">
+            <li>Create a new branch from the latest main branch.</li>
             <li>Make your changes.</li>
             <li>
               Run tests and verify functionality:
               <DocsCodeBlock>{`npm test
 npm run build`}</DocsCodeBlock>
             </li>
-            <li>
-              Commit your changes using a clear commit message:
-              <DocsCodeBlock>{`git commit -m "feat: add Bun environment variable detection"`}</DocsCodeBlock>
-            </li>
+            <li>Commit your changes using a clear commit message.</li>
             <li>
               Push your branch and open a Pull Request against <code className="rounded bg-zinc-100 px-1.5 py-0.5">main</code>.
             </li>

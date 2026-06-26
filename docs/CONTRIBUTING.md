@@ -28,7 +28,7 @@ This guide explains how to set up the project, contribute code, report issues, a
 
 Before contributing, ensure you have the following installed:
 
-* Node.js 18 or later
+* Node.js 20 or later
 * npm 9 or later
 * Git
 
