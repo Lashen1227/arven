@@ -1,6 +1,6 @@
 {
   "name": "@lashen-martino/arven",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Watches over your env vars — scan & generate .env.example on every commit",
   "type": "module",
   "main": "dist/index.js",
