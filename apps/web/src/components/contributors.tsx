@@ -6,7 +6,14 @@ type GitHubContributor = {
   avatar_url: string;
   html_url: string;
   contributions: number;
+  type: string;
 };
+
+const BOT_LOGIN_PATTERNS = [/\[bot\]$/, /^dependabot/i, /^semantic-release-bot$/i];
+
+function isBot(contributor: GitHubContributor): boolean {
+  return contributor.type === "Bot" || BOT_LOGIN_PATTERNS.some((pattern) => pattern.test(contributor.login));
+}
 
 function ContributorAvatar({ contributor }: { contributor: GitHubContributor }) {
   return (
@@ -75,7 +82,7 @@ export function Contributors() {
 
   return (
     <div className="flex flex-wrap gap-4">
-      {query.data?.map((contributor) => (
+      {query.data?.filter((c) => !isBot(c)).map((contributor) => (
         <ContributorAvatar key={contributor.login} contributor={contributor} />
       ))}
     </div>
