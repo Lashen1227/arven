@@ -6,6 +6,7 @@ import { DocsSidebar } from "./docs-sidebar";
 import { DocsToc } from "./docs-toc";
 import type { DocsSlug } from "./docs-nav";
 import { Menu, X } from "lucide-react";
+import { AskAI } from "./ask-ai";
 
 type TocItem = {
   label: string;
@@ -84,6 +85,9 @@ export function DocsLayout({ activeSlug, toc, children }: DocsLayoutProps) {
 
   return (
     <main className="min-h-screen bg-white text-zinc-700">
+      <div className="fixed right-3 top-3 z-50 sm:right-4 sm:top-4">
+        <AskAI />
+      </div>
       <div className="grid min-h-screen lg:grid-cols-[20rem_minmax(0,1fr)_16rem]">
         <aside className="hidden border-r border-zinc-200 lg:flex lg:flex-col">
           <div className="flex h-20 items-center justify-between border-b border-zinc-200 px-5">
@@ -99,7 +103,7 @@ export function DocsLayout({ activeSlug, toc, children }: DocsLayoutProps) {
         </aside>
 
         <div className="min-w-0">
-          <header className="flex items-center justify-between border-b border-zinc-200 px-4 py-5 lg:hidden">
+          <header className="flex items-center justify-between border-b border-zinc-200 px-4 py-5 pr-14 sm:pr-36 lg:hidden">
             <div className="flex items-center gap-3">
               <button
                 type="button"
