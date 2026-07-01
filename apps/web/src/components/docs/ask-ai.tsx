@@ -9,16 +9,13 @@ const AI_PROVIDERS: {
   {
     name: "Open in ChatGPT",
     shortName: "ChatGPT",
-    url: (prompt: string) =>
-      `https://chatgpt.com/?prompt=${encodeURIComponent(prompt)}`,
+    url: (prompt: string) => `https://chatgpt.com/?prompt=${encodeURIComponent(prompt)}`,
   },
   {
     name: "Open in Claude",
     shortName: "Claude",
-    url: (prompt: string) =>
-      `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
+    url: (prompt: string) => `https://claude.ai/new?q=${encodeURIComponent(prompt)}`,
   },
-
 ];
 
 const buildPrompt = () => {
@@ -60,11 +57,16 @@ export function AskAI() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Ask AI"
         className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs sm:px-4 sm:text-sm font-medium text-zinc-600 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
       >
         <Sparkles className="h-4 w-4" />
         <span className="hidden sm:inline">Ask AI</span>
-        <span className="hidden sm:inline">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
+        <span className="hidden sm:inline">
+          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
       </button>
 
       {open && (
