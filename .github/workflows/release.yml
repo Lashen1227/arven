@@ -37,6 +37,7 @@ jobs:
         run: npm run build
 
       - name: Generate changelog
+        if: github.event_name == 'push'
         run: npx changelogithub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
