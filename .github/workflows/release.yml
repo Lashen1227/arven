@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+  pull_request:
+    branches:
+      - main
+
   workflow_dispatch:
     inputs:
       version:
@@ -13,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
@@ -62,6 +67,7 @@ jobs:
           echo "Using npm tag: $NPM_TAG"
 
       - name: Publish to npm
+        if: github.event_name != 'pull_request'
         run: npm publish --provenance --access public --tag ${{ steps.determine_npm_tag.outputs.npm_tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
