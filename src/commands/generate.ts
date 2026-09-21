@@ -3,11 +3,13 @@ import { resolve } from 'path';
 import chalk from 'chalk';
 import { scanEnvVars } from '../scanner.js';
 import { groupByCategory, renderEnvExample } from '../utils/envParser.js';
+import { loadArvenConfig } from '../utils/configParser.js';
 import type { GenerateOptions } from '../types.js';
 
 export async function generate(options: GenerateOptions): Promise<void> {
   const root       = resolve(options.root);
   const outputPath = resolve(options.output);
+  const configPath = resolve(root, options.config);
 
   console.log(chalk.cyan('\n  arven generate') + chalk.gray(' — scanning your codebase...\n'));
 
@@ -29,10 +31,18 @@ export async function generate(options: GenerateOptions): Promise<void> {
     process.exit(0);
   }
 
+  let config;
+  try {
+    config = loadArvenConfig(configPath);
+  } catch (error) {
+    console.log(chalk.red(`  ✕ ${error instanceof Error ? error.message : 'Invalid arven config'}\n`));
+    process.exit(1);
+  }
+
   const varNames = [...found.keys()];
   const groups   = groupByCategory(varNames);
 
-  writeFileSync(outputPath, renderEnvExample(groups), 'utf8');
+  writeFileSync(outputPath, renderEnvExample(groups, config), 'utf8');
 
   console.log(chalk.green(`  ✓ Generated ${options.output}\n`));
 
