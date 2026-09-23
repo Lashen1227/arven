@@ -4,8 +4,10 @@ import { writeFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { parseEnvExample, groupByCategory, renderEnvExample } from '../utils/envParser.js';
+import { loadArvenConfig } from '../utils/configParser.js';
 import { findGitDir, installHook, uninstallHook } from '../hooks/hookManager.js';
 import { scanEnvVars } from '../scanner.js';
+import { schema } from '../commands/schema.js';
 import type { GroupedVars } from '../types.js';
 
 // ─── parseEnvExample ──────────────────────────────────────────────────────────
@@ -107,6 +109,41 @@ describe('renderEnvExample', () => {
     const groups: GroupedVars = new Map([['General', ['FOO']]]);
     assert.ok(renderEnvExample(groups).includes('Welsh'));
   });
+
+  it('renders contract metadata and never writes secret examples', () => {
+    const out = renderEnvExample(new Map([['Payments', ['STRIPE_SECRET_KEY']]]), {
+      variables: {
+        STRIPE_SECRET_KEY: {
+          required: true,
+          description: 'Stripe API credential',
+          example: 'must-not-appear',
+          secret: true,
+        },
+      },
+    });
+    assert.ok(out.includes('# Stripe API credential'));
+    assert.ok(out.includes('# Required'));
+    assert.ok(out.includes('STRIPE_SECRET_KEY='));
+    assert.ok(!out.includes('must-not-appear'));
+  });
+});
+
+describe('loadArvenConfig', () => {
+  it('loads a valid variable contract', () => {
+    const f = join(tmpdir(), `arven-config-${Date.now()}.json`);
+    writeFileSync(f, JSON.stringify({ variables: { API_KEY: { required: false, description: 'API access' } } }));
+    const config = loadArvenConfig(f);
+    assert.equal(config.variables.API_KEY?.required, false);
+    assert.equal(config.variables.API_KEY?.description, 'API access');
+    unlinkSync(f);
+  });
+
+  it('rejects malformed contracts', () => {
+    const f = join(tmpdir(), `arven-invalid-config-${Date.now()}.json`);
+    writeFileSync(f, JSON.stringify({ variables: { API_KEY: { required: 'yes' } } }));
+    assert.throws(() => loadArvenConfig(f), /invalid contract/);
+    unlinkSync(f);
+  });
 });
 
 // ─── scanEnvVars ─────────────────────────────────────────────────────────────
@@ -142,6 +179,22 @@ describe('scanEnvVars', () => {
     const result = await scanEnvVars(dir);
     assert.ok(!result.has('NODE_ENV'));
 
+    rmSync(dir, { recursive: true });
+  });
+});
+
+describe('schema', () => {
+  it('generates a contract for discovered variables', async () => {
+    const dir = join(tmpdir(), `arven-schema-${Date.now()}`);
+    const output = join(dir, '.arvenrc.json');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'server.ts'), 'const key = process.env.SERVICE_API_KEY;\n');
+
+    await schema({ root: dir, output, overwrite: false });
+
+    const config = loadArvenConfig(output);
+    assert.equal(config.variables.SERVICE_API_KEY?.required, true);
+    assert.equal(config.variables.SERVICE_API_KEY?.description, '');
     rmSync(dir, { recursive: true });
   });
 });

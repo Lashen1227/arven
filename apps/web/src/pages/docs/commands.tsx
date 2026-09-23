@@ -7,6 +7,7 @@ const toc = [
   { label: "arven generate", href: "#generate" },
   { label: "arven check", href: "#check" },
   { label: "arven diff", href: "#diff" },
+  { label: "arven schema", href: "#schema" },
   { label: "arven uninstall", href: "#uninstall" },
 ];
 
@@ -90,6 +91,33 @@ Unused in .env.example (documented, not in code):
   - OLD_LEGACY_KEY
 
 Summary: 8 synced  1 missing  1 unused`}</DocsCodeBlock>
+        </DocsSection>
+
+        <DocsSection id="schema" title="arven schema">
+          <p>
+            Generate a starter <code className="rounded bg-zinc-100 px-1.5 py-0.5">.arvenrc.json</code>{" "}
+            contract from the variables used in your codebase. Contracts add descriptions, required
+            status, safe examples, and secret handling to generated environment templates.
+          </p>
+          <DocsCodeBlock>{`arven schema
+arven schema --overwrite
+arven generate --config .arvenrc.json
+arven check --require-metadata`}</DocsCodeBlock>
+          <DocsCodeBlock>{`{
+  "variables": {
+    "STRIPE_SECRET_KEY": {
+      "required": true,
+      "description": "Stripe API credential for server-side payments",
+      "example": "sk_test_...",
+      "secret": true
+    }
+  }
+}`}</DocsCodeBlock>
+          <p>
+            Secret examples are intentionally omitted from <code className="rounded bg-zinc-100 px-1.5 py-0.5">.env.example</code>.
+            {" "}Strict checks require every discovered variable to include a description and an
+            explicit required or optional status.
+          </p>
         </DocsSection>
 
         <DocsSection id="uninstall" title="arven uninstall">

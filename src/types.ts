@@ -8,16 +8,36 @@ export interface GenerateOptions {
   output: string;
   root: string;
   overwrite: boolean;
+  config: string;
 }
 
 export interface CheckOptions {
   root: string;
   example: string;
+  config: string;
+  requireMetadata: boolean;
 }
 
 export interface DiffOptions {
   root: string;
   example: string;
+}
+
+export interface EnvVariableContract {
+  required?: boolean;
+  description?: string;
+  example?: string;
+  secret?: boolean;
+}
+
+export interface ArvenConfig {
+  variables: Record<string, EnvVariableContract>;
+}
+
+export interface SchemaOptions {
+  root: string;
+  output: string;
+  overwrite: boolean;
 }
 
 export interface DiffSummary {

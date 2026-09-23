@@ -11,8 +11,9 @@ import { check }      from '../commands/check.js';
 import { diff }       from '../commands/diff.js';
 import { guard }      from '../commands/guard.js';
 import { uninstall }  from '../commands/uninstall.js';
+import { schema }     from '../commands/schema.js';
 
-import type { GenerateOptions, CheckOptions, DiffOptions } from '../types.js';
+import type { GenerateOptions, CheckOptions, DiffOptions, SchemaOptions } from '../types.js';
 import type { InitOptions }      from '../commands/init.js';
 import type { GuardOptions }     from '../commands/guard.js';
 import type { UninstallOptions } from '../commands/uninstall.js';
@@ -34,6 +35,7 @@ program
   .option('-r, --root <path>',   'Project root directory', '.')
   .option('-o, --output <path>', 'Output file path', '.env.example')
   .option('--overwrite',         'Overwrite existing .env.example', false)
+  .option('-c, --config <path>', 'Path to arven contract config', '.arvenrc.json')
   .action((opts: InitOptions) => init(opts));
 
 // ── arven generate ───────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ program
   .option('-o, --output <path>', 'Output file path', '.env.example')
   .option('-r, --root <path>',   'Root directory to scan', '.')
   .option('--overwrite',         'Overwrite existing .env.example', false)
+  .option('-c, --config <path>', 'Path to arven contract config', '.arvenrc.json')
   .action((opts: GenerateOptions) => generate(opts));
 
 // ── arven check ──────────────────────────────────────────────────────────────
@@ -51,6 +54,8 @@ program
   .description('CI mode — fail if .env.example is out of sync with codebase')
   .option('-r, --root <path>',    'Root directory to scan', '.')
   .option('-e, --example <path>', 'Path to .env.example', '.env.example')
+  .option('-c, --config <path>',  'Path to arven contract config', '.arvenrc.json')
+  .option('--require-metadata',   'Require descriptions and required/optional status', false)
   .action((opts: CheckOptions) => check(opts));
 
 // ── arven diff ───────────────────────────────────────────────────────────────
@@ -60,6 +65,14 @@ program
   .option('-r, --root <path>',    'Root directory to scan', '.')
   .option('-e, --example <path>', 'Path to .env.example', '.env.example')
   .action((opts: DiffOptions) => diff(opts));
+
+program
+  .command('schema')
+  .description('Generate a starter .arvenrc.json contract from discovered variables')
+  .option('-r, --root <path>', 'Root directory to scan', '.')
+  .option('-o, --output <path>', 'Output file path', '.arvenrc.json')
+  .option('--overwrite', 'Overwrite an existing config file', false)
+  .action((opts: SchemaOptions) => schema(opts));
 
 // ── arven guard (called by git hook internally) ───────────────────────────────
 program

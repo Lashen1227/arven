@@ -15,7 +15,7 @@ export function useNpmDownloads() {
     queryKey: ["npm-downloads", "@lashen-martino/arven"],
     queryFn: async () => {
       const response = await fetch(
-        "https://api.npmjs.org/downloads/range/2010-01-01:2030-01-01/@lashen-martino%2Farven"
+        "https://api.npmjs.org/downloads/range/2026-01-01:2036-01-01/@lashen-martino%2Farven"
       );
       if (!response.ok) return "0";
       const data = (await response.json()) as NpmDownloadsResponse;

@@ -4,12 +4,14 @@ import chalk from 'chalk';
 import { installHook } from '../hooks/hookManager.js';
 import { scanEnvVars } from '../scanner.js';
 import { groupByCategory, renderEnvExample } from '../utils/envParser.js';
+import { loadArvenConfig } from '../utils/configParser.js';
 import { writeFileSync } from 'fs';
 
 export interface InitOptions {
   root: string;
   output: string;
   overwrite: boolean;
+  config: string;
 }
 
 export async function init(options: InitOptions): Promise<void> {
@@ -47,8 +49,15 @@ export async function init(options: InitOptions): Promise<void> {
     if (found.size === 0) {
       console.log(chalk.yellow('  No env vars found yet — .env.example not created.\n'));
     } else {
+      let config;
+      try {
+        config = loadArvenConfig(resolve(root, options.config));
+      } catch (error) {
+        console.log(chalk.red(`  ✕ ${error instanceof Error ? error.message : 'Invalid arven config'}\n`));
+        process.exit(1);
+      }
       const groups = groupByCategory([...found.keys()]);
-      writeFileSync(outputPath, renderEnvExample(groups), 'utf8');
+      writeFileSync(outputPath, renderEnvExample(groups, config), 'utf8');
       console.log(
         chalk.green('  ✓ ') +
         chalk.white(`Generated ${options.output}`) +

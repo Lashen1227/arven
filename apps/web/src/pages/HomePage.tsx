@@ -55,12 +55,12 @@ export function HomePage() {
             style={{ transitionDelay: "0ms" }}
           >
             {versionQuery.data && <span>{versionQuery.data} 🎉</span>}
-            {/* {npmDownloadsQuery.data && (
+            {npmDownloadsQuery.data && (
               <span className="flex items-center gap-1">
                 <Box className="h-4 w-4" />
                 {npmDownloadsQuery.data}
               </span>
-            )} */}
+            )}
 
             {/* {starsQuery.data && (
               <span className="flex items-center gap-1">

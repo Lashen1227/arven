@@ -313,6 +313,7 @@ arven is designed to be extended without breaking existing commands:
 | New built-in exclusion | `BUILT_INS` set in `scanner.ts` |
 | New command (e.g. `arven report`) | New file in `src/commands/`, registered in `src/bin/arven.ts` |
 | New file type to scan (e.g. `.astro`) | `FILE_GLOBS` array in `scanner.ts` |
+| Contract metadata for generated variables | `.arvenrc.json` read by `configParser.ts` |
 
 ---
 
