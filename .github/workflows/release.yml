@@ -79,6 +79,20 @@ jobs:
 
       - name: Publish to npm
         if: github.event_name != 'pull_request'
-        run: npm publish --provenance --access public --tag ${{ steps.determine_npm_tag.outputs.npm_tag }}
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if npm publish --provenance --access public --tag ${{ steps.determine_npm_tag.outputs.npm_tag }}; then
+              break
+            fi
+
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "::error ::npm publish failed after 3 attempts."
+              exit 1
+            fi
+
+            echo "npm publish failed on attempt $attempt. Retrying in 10 seconds..."
+            sleep 10
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
