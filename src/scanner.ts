@@ -1,6 +1,7 @@
 import { glob } from 'glob';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { execFileSync } from 'child_process';
+import { relative, resolve, sep } from 'path';
 import type { ScanResult } from './types.js';
 
 /** All env var access patterns across frameworks */
@@ -105,18 +106,24 @@ export async function scanStagedFiles(
   const absRoot = resolve(rootDir);
   const result: ScanResult = new Map();
 
-  const allowed = new Set(
-    FILE_GLOBS.flatMap((g) => g.replace('**/*', '').split(','))
-  );
-
   for (const file of stagedFiles) {
     // Only scan source files
     if (!file.match(/\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte)$/)) continue;
 
+    // Read the blob from Git's index, not the working tree: pre-commit must
+    // validate exactly the snapshot that will be committed.
+    const relPath = relative(absRoot, resolve(file)).split(sep).join('/');
+    if (!relPath || relPath === '..' || relPath.startsWith('../')) continue;
+
     let content: string;
     try {
-      content = readFileSync(file, 'utf8');
+      content = execFileSync('git', ['show', `:${relPath}`], {
+        cwd: absRoot,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
     } catch {
+      // Deleted files and paths absent from the index have no blob to scan.
       continue;
     }
 
@@ -133,9 +140,6 @@ export async function scanStagedFiles(
       }
     }
   }
-
-  // suppress unused warning
-  void allowed;
 
   return result;
 }
