@@ -78,7 +78,6 @@ program
 program
   .command('guard')
   .description('Guard staged files before commit (called by pre-commit hook)')
-  .option('--staged <files>',     'Space-separated list of staged files', '')
   .option('-e, --example <path>', 'Path to .env.example', '.env.example')
   .option('-r, --root <path>',    'Project root', '.')
   .action((opts: GuardOptions) => guard(opts));

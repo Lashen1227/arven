@@ -20,15 +20,8 @@ function buildHookScript(): string {
     HOOK_MARKER,
     '# This hook was installed by arven. Remove with: arven uninstall',
     '',
-    '# Get list of staged files',
-    'STAGED=$(git diff --cached --name-only --diff-filter=ACM)',
-    '',
-    'if [ -z "$STAGED" ]; then',
-    '  exit 0',
-    'fi',
-    '',
-    '# Run arven guard — blocks commit if new env vars are undocumented',
-    'npx arven guard --staged "$STAGED"',
+    '# Run arven guard — it reads staged paths and contents directly from Git',
+    'npx arven guard',
     'exit $?',
   ].join('\n');
 }

@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import { scanStagedFiles } from '../scanner.js';
@@ -6,7 +7,6 @@ import { parseEnvExample } from '../utils/envParser.js';
 import type { GuardResult } from '../types.js';
 
 export interface GuardOptions {
-  staged: string;   // space-separated staged file list from git
   example: string;
   root: string;
 }
@@ -25,10 +25,16 @@ export async function guard(options: GuardOptions): Promise<void> {
     process.exit(0);
   }
 
-  const stagedFiles = options.staged
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((f) => resolve(root, f));
+  let stagedFiles: string[];
+  try {
+    const staged = execFileSync('git', [
+      'diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z',
+    ], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    stagedFiles = staged.toString('utf8').split('\0').filter(Boolean).map((f) => resolve(root, f));
+  } catch {
+    console.log(chalk.red('\n  arven ✕  Could not read staged files from Git.\n'));
+    process.exit(1);
+  }
 
   if (stagedFiles.length === 0) process.exit(0);
 
