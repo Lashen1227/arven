@@ -1,8 +1,8 @@
 import { glob } from 'glob';
 import { readFileSync } from 'fs';
-import { execFileSync } from 'child_process';
 import { relative, resolve, sep } from 'path';
 import type { ScanResult } from './types.js';
+import { readGitIndexFile } from './utils/gitIndex.js';
 
 /** All env var access patterns across frameworks */
 const PATTERNS: RegExp[] = [
@@ -101,9 +101,11 @@ export async function scanEnvVars(rootDir: string = '.'): Promise<ScanResult> {
  */
 export async function scanStagedFiles(
   stagedFiles: string[],
-  rootDir: string = '.'
+  rootDir: string = '.',
+  gitRootDir: string = rootDir
 ): Promise<ScanResult> {
   const absRoot = resolve(rootDir);
+  const absGitRoot = resolve(gitRootDir);
   const result: ScanResult = new Map();
 
   for (const file of stagedFiles) {
@@ -112,17 +114,14 @@ export async function scanStagedFiles(
 
     // Read the blob from Git's index, not the working tree: pre-commit must
     // validate exactly the snapshot that will be committed.
-    const relPath = relative(absRoot, resolve(file)).split(sep).join('/');
-    if (!relPath || relPath === '..' || relPath.startsWith('../')) continue;
+    const absFile = resolve(file);
+    const projectRelativePath = relative(absRoot, absFile);
+    if (projectRelativePath === '..' || projectRelativePath.startsWith(`..${sep}`)) continue;
+    const gitRelativePath = relative(absGitRoot, absFile).split(sep).join('/');
+    if (!gitRelativePath || gitRelativePath === '..' || gitRelativePath.startsWith('../')) continue;
 
-    let content: string;
-    try {
-      content = execFileSync('git', ['show', `:${relPath}`], {
-        cwd: absRoot,
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
-    } catch {
+    const content = readGitIndexFile(absGitRoot, gitRelativePath);
+    if (content === null) {
       // Deleted files and paths absent from the index have no blob to scan.
       continue;
     }
@@ -136,7 +135,7 @@ export async function scanStagedFiles(
         if (!varName || BUILT_INS.has(varName)) continue;
 
         if (!result.has(varName)) result.set(varName, new Set());
-        result.get(varName)!.add(file.replace(`${absRoot}/`, ''));
+        result.get(varName)!.add(projectRelativePath.split(sep).join('/'));
       }
     }
   }

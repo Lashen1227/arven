@@ -6,10 +6,14 @@ import type { ArvenConfig, GroupedVars } from '../types.js';
  */
 export function parseEnvExample(filePath: string): Set<string> {
   if (!existsSync(filePath)) return new Set();
+  return parseEnvExampleContent(readFileSync(filePath, 'utf8'));
+}
 
+/** Parse declared variable names from .env.example contents. */
+export function parseEnvExampleContent(content: string): Set<string> {
   const vars = new Set<string>();
 
-  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
+  for (const line of content.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
 
