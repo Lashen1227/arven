@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 import chalk from 'chalk';
 import { scanStagedFiles } from '../scanner.js';
 import { parseEnvExample, parseEnvExampleContent } from '../utils/envParser.js';
-import { readGitIndexFile } from '../utils/gitIndex.js';
+import { gitHeadHasFile, readGitIndexFile } from '../utils/gitIndex.js';
 import type { GuardResult, ScanResult } from '../types.js';
 
 export interface GuardOptions {
@@ -57,16 +57,32 @@ export async function guard(options: GuardOptions): Promise<void> {
     console.log(chalk.red(`\n  arven ✕  ${error instanceof Error ? error.message : 'Could not read staged .env.example.'}\n`));
     process.exit(1);
   }
-  // No .env.example in the index or working tree yet — warn but don't block.
-  if (stagedExample === null && !existsSync(examplePath)) {
-    console.log(
-      chalk.yellow('\n  arven ⚠  ') +
-      chalk.white('.env.example not found.') +
-      chalk.gray(' Run: arven generate\n')
-    );
-    process.exit(0);
+  let documented: Set<string>;
+  if (stagedExample !== null) {
+    documented = parseEnvExampleContent(stagedExample);
+  } else {
+    let existedInHead: boolean;
+    try {
+      existedInHead = gitHeadHasFile(gitRoot, stagedExamplePath);
+    } catch (error) {
+      console.log(chalk.red(`\n  arven ✕  ${error instanceof Error ? error.message : 'Could not check .env.example in HEAD.'}\n`));
+      process.exit(1);
+    }
+
+    // An index deletion must not fall back to a working-tree copy.
+    if (existedInHead) {
+      documented = new Set();
+    } else if (existsSync(examplePath)) {
+      documented = parseEnvExample(examplePath);
+    } else {
+      console.log(
+        chalk.yellow('\n  arven ⚠  ') +
+        chalk.white('.env.example not found.') +
+        chalk.gray(' Run: arven generate\n')
+      );
+      process.exit(0);
+    }
   }
-  const documented = stagedExample === null ? parseEnvExample(examplePath) : parseEnvExampleContent(stagedExample);
 
   const result: GuardResult = {
     missing: [...found.keys()].filter((v) => !documented.has(v)),
