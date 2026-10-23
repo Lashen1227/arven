@@ -1,7 +1,8 @@
 import { glob } from 'glob';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { relative, resolve, sep } from 'path';
 import type { ScanResult } from './types.js';
+import { readGitIndexFile } from './utils/gitIndex.js';
 
 /** All env var access patterns across frameworks */
 const PATTERNS: RegExp[] = [
@@ -100,23 +101,28 @@ export async function scanEnvVars(rootDir: string = '.'): Promise<ScanResult> {
  */
 export async function scanStagedFiles(
   stagedFiles: string[],
-  rootDir: string = '.'
+  rootDir: string = '.',
+  gitRootDir: string = rootDir
 ): Promise<ScanResult> {
   const absRoot = resolve(rootDir);
+  const absGitRoot = resolve(gitRootDir);
   const result: ScanResult = new Map();
-
-  const allowed = new Set(
-    FILE_GLOBS.flatMap((g) => g.replace('**/*', '').split(','))
-  );
 
   for (const file of stagedFiles) {
     // Only scan source files
     if (!file.match(/\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte)$/)) continue;
 
-    let content: string;
-    try {
-      content = readFileSync(file, 'utf8');
-    } catch {
+    // Read the blob from Git's index, not the working tree: pre-commit must
+    // validate exactly the snapshot that will be committed.
+    const absFile = resolve(file);
+    const projectRelativePath = relative(absRoot, absFile);
+    if (projectRelativePath === '..' || projectRelativePath.startsWith(`..${sep}`)) continue;
+    const gitRelativePath = relative(absGitRoot, absFile).split(sep).join('/');
+    if (!gitRelativePath || gitRelativePath === '..' || gitRelativePath.startsWith('../')) continue;
+
+    const content = readGitIndexFile(absGitRoot, gitRelativePath);
+    if (content === null) {
+      // Deleted files and paths absent from the index have no blob to scan.
       continue;
     }
 
@@ -129,13 +135,10 @@ export async function scanStagedFiles(
         if (!varName || BUILT_INS.has(varName)) continue;
 
         if (!result.has(varName)) result.set(varName, new Set());
-        result.get(varName)!.add(file.replace(`${absRoot}/`, ''));
+        result.get(varName)!.add(projectRelativePath.split(sep).join('/'));
       }
     }
   }
-
-  // suppress unused warning
-  void allowed;
 
   return result;
 }
