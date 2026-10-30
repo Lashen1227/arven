@@ -40,6 +40,15 @@ export interface SchemaOptions {
   overwrite: boolean;
 }
 
+export interface CodegenOptions {
+  root: string;
+  output: string;
+  overwrite: boolean;
+  config: string;
+  /** 'zod' (default) — requires zod peer dep. 'ts' — zero dependencies. */
+  format: 'zod' | 'ts';
+}
+
 export interface DiffSummary {
   missing: string[];
   unused: string[];

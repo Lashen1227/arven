@@ -18,6 +18,8 @@ It scans your codebase, generates a structured `.env.example`, and installs a Gi
 
 * **CI-Friendly Validation** — Verify documentation consistency in CI/CD pipelines.
 
+* **Runtime Validator Generation** — Generate a type-safe `env.ts` module (Zod or plain TypeScript) that validates all env vars at application startup, with smart type inference from variable naming conventions.
+
 * **Framework Agnostic** — Works with Node.js, Vite, Next.js, Bun, Deno, and more.
 
 * **Zero Workflow Changes** — Integrates directly with Git and remains silent when everything is properly documented.
@@ -94,6 +96,78 @@ Compare detected variables against the current `.env.example` without modifying 
 ```bash
 arven diff
 ```
+---
+
+### Generate a Type-Safe Env Validator
+
+Generate a runtime validator module that checks all env vars at application startup:
+
+```bash
+arven codegen
+```
+
+This produces an `env.ts` file that you import **once** in your app's entry point:
+
+```typescript
+import { env } from './env.js';
+
+// env.DATABASE_URL  — typed string, guaranteed present at startup
+// env.PORT          — typed number, auto-coerced
+```
+
+If a required variable is missing the app **exits immediately** with a clear error — no more mysterious crashes deep in the call stack.
+
+#### Zod format (default)
+
+Requires `zod` as a peer dependency (`npm install zod`):
+
+```bash
+arven codegen --format zod
+```
+
+Generates a Zod schema with smart type inference:
+- `PORT`, `TIMEOUT`, `MAX_*` → `z.coerce.number()`
+- `ENABLE_*`, `DEBUG`, `FEATURE_*` → `z.enum(['true', 'false'])`
+- `*_URL`, `*_URI`, `*_DSN` → `z.string().url()`
+- `required: false` in `.arvenrc.json` → `.optional()`
+- All others → `z.string().min(1)`
+
+#### TypeScript format (zero dependencies)
+
+```bash
+arven codegen --format ts
+```
+
+Generates a plain TypeScript validator with no external dependencies. Exits with a human-readable error message if any required variable is missing.
+
+#### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-o, --output <path>` | Output file path | `env.ts` |
+| `-f, --format <format>` | `zod` or `ts` | `zod` |
+| `--overwrite` | Overwrite existing file | `false` |
+| `-c, --config <path>` | Path to `.arvenrc.json` | `.arvenrc.json` |
+
+#### Recommended workflow
+
+```bash
+# 1. Generate the contract
+arven schema
+
+# 2. Fill in descriptions, required flags, and examples
+#    Edit .arvenrc.json
+
+# 3. Generate the validator
+arven codegen
+
+# 4. Import it in your app entry point
+#    import { env } from './env.js'
+
+# 5. Keep in sync after adding new vars
+arven codegen --overwrite
+```
+
 ---
 
 ### Remove Arven

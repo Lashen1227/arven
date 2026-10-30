@@ -12,8 +12,9 @@ import { diff }       from '../commands/diff.js';
 import { guard }      from '../commands/guard.js';
 import { uninstall }  from '../commands/uninstall.js';
 import { schema }     from '../commands/schema.js';
+import { codegen }    from '../commands/codegen.js';
 
-import type { GenerateOptions, CheckOptions, DiffOptions, SchemaOptions } from '../types.js';
+import type { GenerateOptions, CheckOptions, DiffOptions, SchemaOptions, CodegenOptions } from '../types.js';
 import type { InitOptions }      from '../commands/init.js';
 import type { GuardOptions }     from '../commands/guard.js';
 import type { UninstallOptions } from '../commands/uninstall.js';
@@ -66,12 +67,13 @@ program
   .option('-e, --example <path>', 'Path to .env.example', '.env.example')
   .action((opts: DiffOptions) => diff(opts));
 
+// ── arven schema ─────────────────────────────────────────────────────────────
 program
   .command('schema')
   .description('Generate a starter .arvenrc.json contract from discovered variables')
-  .option('-r, --root <path>', 'Root directory to scan', '.')
+  .option('-r, --root <path>',   'Root directory to scan', '.')
   .option('-o, --output <path>', 'Output file path', '.arvenrc.json')
-  .option('--overwrite', 'Overwrite an existing config file', false)
+  .option('--overwrite',         'Overwrite an existing config file', false)
   .action((opts: SchemaOptions) => schema(opts));
 
 // ── arven guard (called by git hook internally) ───────────────────────────────
@@ -88,5 +90,16 @@ program
   .description('Remove arven from the pre-commit hook')
   .option('-r, --root <path>', 'Project root directory', '.')
   .action((opts: UninstallOptions) => uninstall(opts));
+
+// ── arven codegen ─────────────────────────────────────────────────────────────
+program
+  .command('codegen')
+  .description('Generate a type-safe env validator module from .arvenrc.json contracts')
+  .option('-r, --root <path>',     'Root directory to scan',                         '.')
+  .option('-o, --output <path>',   'Output file path',                               'env.ts')
+  .option('--overwrite',           'Overwrite existing output file',                 false)
+  .option('-c, --config <path>',   'Path to arven contract config',                  '.arvenrc.json')
+  .option('-f, --format <format>', "Output format: 'zod' (default) or 'ts' (no deps)", 'zod')
+  .action((opts: CodegenOptions) => codegen(opts));
 
 program.parse();
