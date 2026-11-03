@@ -142,6 +142,7 @@ export function renderTsOutput(
   // Build validator
   lines.push('function validateEnv(): Env {');
   lines.push('  const missing: string[] = [];');
+  lines.push('  const invalid: string[] = [];');
   lines.push('');
 
   const nameToCategory = new Map<string, string>();
@@ -159,20 +160,28 @@ export function renderTsOutput(
     }
     const contract = config.variables[name] ?? {};
     const optional = contract.required === false;
-    if (!optional) {
-      lines.push(`  if (!process.env.${name}) missing.push('${name}');`);
+    if (!optional) lines.push(`  if (process.env.${name} === undefined || process.env.${name} === '') missing.push('${name}');`);
+    if (isNumberVar(name)) {
+      lines.push(`  const _${name} = process.env.${name} === undefined || process.env.${name} === '' ? undefined : Number(process.env.${name});`);
+      lines.push(`  if (_${name} !== undefined && !Number.isFinite(_${name})) invalid.push('${name}');`);
     }
   }
 
   lines.push('');
-  lines.push('  if (missing.length > 0) {');
+  lines.push('  if (missing.length > 0 || invalid.length > 0) {');
   lines.push('    console.error(\'\\n[arven] Missing required environment variables:\\n\');');
   lines.push('    for (const v of missing) console.error(`  ✗ ${v}`);');
+  lines.push('    if (invalid.length > 0) console.error(\'\\n[arven] Invalid numeric environment variables:\\n\');');
+  lines.push('    for (const v of invalid) console.error(`  ✗ ${v} must be a finite number`);');
   lines.push('    console.error(\'\\nAdd these to your .env file and try again.\\n\');');
   lines.push('    process.exit(1);');
   lines.push('  }');
   lines.push('');
-  lines.push('  return process.env as unknown as Env;');
+  lines.push('  return {');
+  for (const name of sorted) {
+    lines.push(isNumberVar(name) ? `    ${name}: _${name},` : `    ${name}: process.env.${name},`);
+  }
+  lines.push('  } as Env;');
   lines.push('}');
   lines.push('');
   lines.push('/**');
