@@ -55,7 +55,8 @@ export async function codegen(options: CodegenOptions): Promise<void> {
       // Use createRequire for a synchronous, type-checker-safe existence check.
       // zod is a peer dependency of the USER's project, not of arven itself.
       const { createRequire } = await import('module');
-      const req = createRequire(import.meta.url);
+      // Resolve from the target project, rather than from arven's installation.
+      const req = createRequire(resolve(root, '__arven_resolver__.cjs'));
       req.resolve('zod');
     } catch {
       console.log(
@@ -69,6 +70,11 @@ export async function codegen(options: CodegenOptions): Promise<void> {
       );
       process.exit(1);
     }
+  }
+
+  if (format !== 'zod' && format !== 'ts') {
+    console.log(chalk.red(`  ✕ Unsupported format "${format}". Use "zod" or "ts".\n`));
+    process.exit(1);
   }
 
   // Render output
