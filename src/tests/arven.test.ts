@@ -254,6 +254,28 @@ describe('renderZodOutput', () => {
     assert.ok(out.includes('z.coerce.number()'));
   });
 
+  it('preprocesses empty numeric values while preserving whitespace for coercion', () => {
+    const required = renderZodOutput(['PORT'], makeConfig(), new Map());
+    const optional = renderZodOutput(['PORT'], makeConfig({ PORT: { required: false } }), new Map());
+    assert.ok(required.includes("z.preprocess((value) => value === '' ? undefined : value, z.coerce.number())"));
+    assert.ok(optional.includes("z.preprocess((value) => value === '' ? undefined : value, z.coerce.number().optional())"));
+  });
+
+  it('keeps multiline descriptions on one generated comment line', () => {
+    const out = renderZodOutput(['MY_VAR'], makeConfig({ MY_VAR: { description: 'first line\nsecond line\r\nthird' } }), new Map());
+    assert.ok(out.includes('// first line second line third'));
+  });
+
+  it('uses narrow name patterns for numeric and boolean inference', () => {
+    const names = ['PORT', 'PORTAL_URL', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS', 'ENABLE_CACHE'];
+    const out = renderZodOutput(names, makeConfig(), new Map());
+    assert.match(out, /PORT:\s+z\.preprocess/);
+    for (const name of ['PORTAL_URL', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS']) {
+      assert.match(out, new RegExp(`${name}:\\s+z\\.string`));
+    }
+    assert.match(out, /ENABLE_CACHE:\s+z\.enum/);
+  });
+
   it('uses z.string().url() for URL-suffixed vars', () => {
     const cats: GroupedVars = new Map([['Database', ['DATABASE_URL']]]);
     const out = renderZodOutput(['DATABASE_URL'], makeConfig(), cats);
@@ -316,7 +338,7 @@ describe('renderTsOutput', () => {
   it('uses number type for PORT-style vars', () => {
     const cats: GroupedVars = new Map([['Server', ['PORT']]]);
     const out = renderTsOutput(['PORT'], makeConfig(), cats);
-    assert.ok(out.includes('PORT:') && out.includes('number'));
+    assert.match(out, /PORT:\s+number;/);
   });
 
   it('marks optional vars with | undefined', () => {
@@ -356,6 +378,22 @@ describe('renderTsOutput', () => {
 // ─── codegen command (integration) ───────────────────────────────────────────
 
 describe('codegen command', () => {
+  it('creates nested output directories and excludes output-only references', async () => {
+    const dir = join(tmpdir(), `arven-codegen-nested-${Date.now()}`);
+    const output = join(dir, 'generated', 'nested', 'env.ts');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'app.ts'), 'const value = process.env.APP_KEY;\n');
+    mkdirSync(join(dir, 'generated', 'nested'), { recursive: true });
+    writeFileSync(output, 'const outputOnly = process.env.OUTPUT_ONLY;\n');
+
+    await codegen({ root: dir, output, overwrite: true, config: join(dir, '.arvenrc.json'), format: 'ts' });
+
+    const content = readFileSync(output, 'utf8');
+    assert.match(content, /APP_KEY/);
+    assert.doesNotMatch(content, /OUTPUT_ONLY/);
+    rmSync(dir, { recursive: true });
+  });
+
   it('generates a ts validator file with --format ts', async () => {
     const dir    = join(tmpdir(), `arven-codegen-${Date.now()}`);
     const output = join(dir, 'env.ts');
@@ -426,8 +464,7 @@ describe('codegen command', () => {
 
     const content = readFileSync(output, 'utf8');
     // PORT-like name → number type in ts format
-    assert.ok(content.includes('number'));
-    assert.ok(content.includes('WEBHOOK_PORT'));
+    assert.match(content, /WEBHOOK_PORT:\s+number;/);
 
     rmSync(dir, { recursive: true });
   });

@@ -126,8 +126,8 @@ arven codegen --format zod
 ```
 
 Generates a Zod schema with smart type inference:
-- `PORT`, `TIMEOUT`, `MAX_*` → `z.coerce.number()`
-- `ENABLE_*`, `DEBUG`, `FEATURE_*` → `z.enum(['true', 'false'])`
+- `PORT`, delimited `TIMEOUT` / `RETRY` / `LIMIT` / `WORKERS` / `TTL` names, and `MAX_*` / `MIN_*` / `POOL_*` / `RATE_*` → numeric values
+- `ENABLE_*`, `DISABLE_*`, `FEATURE_*`, `USE_*`, `IS_*` → `z.enum(['true', 'false'])`
 - `*_URL`, `*_URI`, `*_DSN` → `z.string().url()`
 - `required: false` in `.arvenrc.json` → `.optional()`
 - All others → `z.string().min(1)`

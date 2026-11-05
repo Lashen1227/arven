@@ -356,8 +356,8 @@ renderTsOutput(varNames, config, categories)
 
 | Name pattern | Zod chain | TS type |
 |---|---|---|
-| `PORT`, `TIMEOUT`, `MAX_*`, `LIMIT`, `WORKERS`, `TTL` | `z.coerce.number()` | `number` |
-| `ENABLE_*`, `DEBUG`, `FEATURE_*`, `IS_*`, `ALLOW_*` | `z.enum(['true','false'])` | `string` |
+| `PORT` (exact), delimited `TIMEOUT`, `RETRY`, `LIMIT`, `WORKERS`, `CONCURRENCY`, `TTL`, `EXPIRE_IN`, `CACHE_TTL`; `MAX_*`, `MIN_*`, `POOL_*`, `RATE_*`; or `*_PORT` | `z.coerce.number()` | `number` |
+| `ENABLE_*`, `DISABLE_*`, `FEATURE_*`, `USE_*`, `IS_*` | `z.enum(['true','false'])` | `string` |
 | `*_URL`, `*_URI`, `*_ENDPOINT`, `*_DSN` | `z.string().url()` | `string` |
 | `required: false` in contract | `.optional()` suffix | `string \| undefined` |
 | Everything else | `z.string().min(1)` | `string` |
