@@ -7,8 +7,8 @@ export type CodegenFormat = 'zod' | 'ts';
  *
  * Rules:
  *  - SECRET vars  → z.string().min(1)            (no example leakage)
- *  - NUMBER vars  → z.coerce.number()             (PORT, TIMEOUT, …)
- *  - BOOLEAN vars → z.enum(['true','false']) …    (FEATURE_FLAG, …)
+ *  - NUMBER vars  → preprocess empty strings, then coerce numbers (PORT, TIMEOUT, …)
+ *  - BOOLEAN vars → z.enum(['true','false']) …    (ENABLE_FEATURE, …)
  *  - URL vars     → z.string().url()              (*_URL, *_URI)
  *  - optional     → .optional() suffix when required === false
  */
@@ -39,13 +39,21 @@ function zodChain(
 }
 
 function isNumberVar(name: string): boolean {
+<<<<<<< HEAD
   return /^(?:PORT|TIMEOUT|RETRY|LIMIT|WORKERS|CONCURRENCY|TTL|EXPIRES?_IN|CACHE_TTL)(?:_|$)/.test(name)
     || /^(?:MAX|MIN|POOL|RATE)_/.test(name)
+=======
+  return /^(?:(?:PORT|TIMEOUT|RETRY|LIMIT|WORKERS|CONCURRENCY|TTL|EXPIRES?_IN|CACHE_TTL)(?:_|$)|(?:MAX|MIN|POOL|RATE)_)/.test(name)
+>>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
     || /_PORT$/.test(name);
 }
 
 function isBooleanVar(name: string): boolean {
+<<<<<<< HEAD
   return /^(?:ENABLE|DISABLE|FEATURE|USE|IS)_/.test(name);
+=======
+  return /^(ENABLE_|DISABLE_|USE_|IS_)/.test(name);
+>>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
 }
 
 function isUrlVar(name: string): boolean {
@@ -91,7 +99,11 @@ export function renderZodOutput(
 
     const contract = config.variables[name] ?? {};
     const chain = zodChain(name, contract);
+<<<<<<< HEAD
     const desc = contract.description ? ` // ${contract.description.replace(/[\r\n]+/g, ' ')}` : '';
+=======
+    const desc = contract.description ? ` // ${contract.description.replace(/\r\n|[\r\n\u2028\u2029]/g, ' ')}` : '';
+>>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
     const padding = Math.max(1, 36 - name.length);
     lines.push(`  ${name}:${' '.repeat(padding)}${chain},${desc}`);
   }
@@ -175,7 +187,11 @@ export function renderTsOutput(
   lines.push('    for (const v of missing) console.error(`  ✗ ${v}`);');
   lines.push('    if (invalid.length > 0) console.error(\'\\n[arven] Invalid numeric environment variables:\\n\');');
   lines.push('    for (const v of invalid) console.error(`  ✗ ${v} must be a finite number`);');
+<<<<<<< HEAD
   lines.push('    console.error(\'\\nSet the required environment variables to valid values and try again.\\n\');');
+=======
+  lines.push('    console.error(\'\\nCheck your environment variables and try again.\\n\');');
+>>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
   lines.push('    process.exit(1);');
   lines.push('  }');
   lines.push('');
