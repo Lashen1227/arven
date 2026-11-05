@@ -354,14 +354,21 @@ renderTsOutput(varNames, config, categories)
 
 **Smart type inference rules (applied by name, not LLM):**
 
-| Name pattern | Zod chain | TS type |
-|---|---|---|
-| `PORT`, `TIMEOUT`, `MAX_*`, `LIMIT`, `WORKERS`, `TTL` | `z.coerce.number()` | `number` |
-| `ENABLE_*`, `DEBUG`, `FEATURE_*`, `IS_*`, `ALLOW_*` | `z.enum(['true','false'])` | `string` |
-| `*_URL`, `*_URI`, `*_ENDPOINT`, `*_DSN` | `z.string().url()` | `string` |
-| `required: false` in contract | `.optional()` suffix | `string \| undefined` |
-| Everything else | `z.string().min(1)` | `string` |
+<!-- coderabbit-ai-generated:v1 -->
 
+<!-- coderabbit-ai-generated-section:v1:0f386cd013e44b01dd2bad14724aed536f3c557c9cc84ef6e065a6be41190cdc -->
+
+| Name pattern (matched in order) | Zod schema | TS type |
+|---|---|---|
+| `PORT`, `TIMEOUT`, `RETRY`, `LIMIT`, `WORKERS`, `CONCURRENCY`, `TTL`, `EXPIRE_IN`, `EXPIRES_IN`, `CACHE_TTL` (exact or followed by `_`); `MAX_*`, `MIN_*`, `POOL_*`, `RATE_*`; `*_PORT` | Coerced number | `number` |
+| `ENABLE_*`, `DISABLE_*`, `USE_*`, `IS_*` | Enum of `true` and `false` strings | `string` |
+| Names ending in `URL`, `URI`, `ENDPOINT`, or `DSN` | URL string | `string` |
+| Everything else | Non-empty string | `string` |
+
+A contract with `required: false` permits undefined. Empty numeric values are rejected when required and treated as undefined when optional; whitespace-only numeric values are coerced to zero.
+
+
+<!-- /coderabbit-ai-generated:v1 -->
 ---
 
 ### `arven codegen`

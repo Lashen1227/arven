@@ -7,8 +7,8 @@ export type CodegenFormat = 'zod' | 'ts';
  *
  * Rules:
  *  - SECRET vars  → z.string().min(1)            (no example leakage)
- *  - NUMBER vars  → z.coerce.number()             (PORT, TIMEOUT, …)
- *  - BOOLEAN vars → z.enum(['true','false']) …    (FEATURE_FLAG, …)
+ *  - NUMBER vars  → preprocess empty strings, then coerce numbers (PORT, TIMEOUT, …)
+ *  - BOOLEAN vars → z.enum(['true','false']) …    (ENABLE_FEATURE, …)
  *  - URL vars     → z.string().url()              (*_URL, *_URI)
  *  - optional     → .optional() suffix when required === false
  */
@@ -22,7 +22,8 @@ function zodChain(
   let chain: string;
 
   if (isNumberVar(name)) {
-    chain = optional ? 'z.coerce.number().optional()' : 'z.coerce.number()';
+    const numberSchema = optional ? 'z.coerce.number().optional()' : 'z.coerce.number()';
+    chain = `z.preprocess((value) => value === '' ? undefined : value, ${numberSchema})`;
   } else if (isBooleanVar(name)) {
     chain = optional
       ? "z.enum(['true', 'false']).optional()"
@@ -38,12 +39,12 @@ function zodChain(
 }
 
 function isNumberVar(name: string): boolean {
-  return /^(PORT|TIMEOUT|RETRY|MAX_|MIN_|LIMIT|WORKERS|POOL_|CONCURRENCY|RATE_|TTL|EXPIRES?_IN|CACHE_TTL)/.test(name)
+  return /^(?:(?:PORT|TIMEOUT|RETRY|LIMIT|WORKERS|CONCURRENCY|TTL|EXPIRES?_IN|CACHE_TTL)(?:_|$)|(?:MAX|MIN|POOL|RATE)_)/.test(name)
     || /_PORT$/.test(name);
 }
 
 function isBooleanVar(name: string): boolean {
-  return /^(ENABLE_|DISABLE_|FEATURE_|DEBUG|VERBOSE|USE_|IS_|ALLOW_|SECURE_|SSL_|TLS_)/.test(name);
+  return /^(ENABLE_|DISABLE_|USE_|IS_)/.test(name);
 }
 
 function isUrlVar(name: string): boolean {
@@ -89,7 +90,7 @@ export function renderZodOutput(
 
     const contract = config.variables[name] ?? {};
     const chain = zodChain(name, contract);
-    const desc = contract.description ? ` // ${contract.description}` : '';
+    const desc = contract.description ? ` // ${contract.description.replace(/\r\n|[\r\n\u2028\u2029]/g, ' ')}` : '';
     const padding = Math.max(1, 36 - name.length);
     lines.push(`  ${name}:${' '.repeat(padding)}${chain},${desc}`);
   }
@@ -169,11 +170,11 @@ export function renderTsOutput(
 
   lines.push('');
   lines.push('  if (missing.length > 0 || invalid.length > 0) {');
-  lines.push('    console.error(\'\\n[arven] Missing required environment variables:\\n\');');
+  lines.push('    if (missing.length > 0) console.error(\'\\n[arven] Missing required environment variables:\\n\');');
   lines.push('    for (const v of missing) console.error(`  ✗ ${v}`);');
   lines.push('    if (invalid.length > 0) console.error(\'\\n[arven] Invalid numeric environment variables:\\n\');');
   lines.push('    for (const v of invalid) console.error(`  ✗ ${v} must be a finite number`);');
-  lines.push('    console.error(\'\\nAdd these to your .env file and try again.\\n\');');
+  lines.push('    console.error(\'\\nCheck your environment variables and try again.\\n\');');
   lines.push('    process.exit(1);');
   lines.push('  }');
   lines.push('');

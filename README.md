@@ -125,13 +125,23 @@ Requires `zod` as a peer dependency (`npm install zod`):
 arven codegen --format zod
 ```
 
-Generates a Zod schema with smart type inference:
-- `PORT`, `TIMEOUT`, `MAX_*` → `z.coerce.number()`
-- `ENABLE_*`, `DEBUG`, `FEATURE_*` → `z.enum(['true', 'false'])`
-- `*_URL`, `*_URI`, `*_DSN` → `z.string().url()`
-- `required: false` in `.arvenrc.json` → `.optional()`
-- All others → `z.string().min(1)`
+<!-- coderabbit-ai-generated:v1 -->
 
+<!-- coderabbit-ai-generated-section:v1:301dd9c47430a56990f954c79c93d9eeb507c58f69d442a8d5c7ea0124378fc8 -->
+
+Generates a Zod schema with smart type inference, in this order:
+
+| Name pattern | Zod schema |
+|---|---|
+| `PORT`, `TIMEOUT`, `RETRY`, `LIMIT`, `WORKERS`, `CONCURRENCY`, `TTL`, `EXPIRE_IN`, `EXPIRES_IN`, `CACHE_TTL` (exact or followed by `_`); `MAX_*`, `MIN_*`, `POOL_*`, `RATE_*`; `*_PORT` | Coerced number |
+| `ENABLE_*`, `DISABLE_*`, `USE_*`, `IS_*` | Enum of `true` and `false` strings |
+| Names ending in `URL`, `URI`, `ENDPOINT`, or `DSN` | URL string |
+| All others | Non-empty string |
+
+A contract with `required: false` makes the variable optional. An empty numeric value is rejected when required and treated as undefined when optional. Whitespace-only numeric values are coerced to zero.
+
+
+<!-- /coderabbit-ai-generated:v1 -->
 #### TypeScript format (zero dependencies)
 
 ```bash

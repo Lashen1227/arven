@@ -1,5 +1,5 @@
-import { writeFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
 import chalk from 'chalk';
 import { scanEnvVars } from '../scanner.js';
 import { groupByCategory } from '../utils/envParser.js';
@@ -39,9 +39,12 @@ export async function codegen(options: CodegenOptions): Promise<void> {
 
   // Scan codebase for env vars
   const found    = await scanEnvVars(root);
-  const varNames = [...found.keys()];
+  const varNames = [...found].filter(([, files]) =>
+    [...files].some((file) => resolve(root, file) !== outputPath)
+  ).map(([name]) => name);
 
-  if (varNames.length === 0) {
+  // Regenerate an empty validator if the old output is the only source of references.
+  if (varNames.length === 0 && found.size === 0) {
     console.log(chalk.yellow('  No environment variables found in codebase.\n'));
     process.exit(0);
   }
@@ -82,6 +85,12 @@ export async function codegen(options: CodegenOptions): Promise<void> {
     ? renderZodOutput(varNames, config, categories)
     : renderTsOutput(varNames, config, categories);
 
+  try {
+    mkdirSync(dirname(outputPath), { recursive: true });
+  } catch (error) {
+    console.log(chalk.red(`  ✕ Could not create output directory for ${options.output}: ${error instanceof Error ? error.message : String(error)}\n`));
+    process.exit(1);
+  }
   writeFileSync(outputPath, output, 'utf8');
 
   console.log(
