@@ -125,17 +125,6 @@ Requires `zod` as a peer dependency (`npm install zod`):
 arven codegen --format zod
 ```
 
-<<<<<<< HEAD
-Generates a Zod schema with smart type inference:
-- `PORT`, delimited `TIMEOUT` / `RETRY` / `LIMIT` / `WORKERS` / `TTL` names, and `MAX_*` / `MIN_*` / `POOL_*` / `RATE_*` → numeric values
-- `ENABLE_*`, `DISABLE_*`, `FEATURE_*`, `USE_*`, `IS_*` → `z.enum(['true', 'false'])`
-- `*_URL`, `*_URI`, `*_DSN` → `z.string().url()`
-- `required: false` in `.arvenrc.json` → `.optional()`
-- All others → `z.string().min(1)`
-=======
-<!-- coderabbit-ai-generated:v1 -->
->>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
-
 <!-- coderabbit-ai-generated-section:v1:301dd9c47430a56990f954c79c93d9eeb507c58f69d442a8d5c7ea0124378fc8 -->
 
 Generates a Zod schema with smart type inference, in this order:

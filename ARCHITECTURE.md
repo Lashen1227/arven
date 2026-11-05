@@ -354,18 +354,6 @@ renderTsOutput(varNames, config, categories)
 
 **Smart type inference rules (applied by name, not LLM):**
 
-<<<<<<< HEAD
-| Name pattern | Zod chain | TS type |
-|---|---|---|
-| `PORT` (exact), delimited `TIMEOUT`, `RETRY`, `LIMIT`, `WORKERS`, `CONCURRENCY`, `TTL`, `EXPIRE_IN`, `CACHE_TTL`; `MAX_*`, `MIN_*`, `POOL_*`, `RATE_*`; or `*_PORT` | `z.coerce.number()` | `number` |
-| `ENABLE_*`, `DISABLE_*`, `FEATURE_*`, `USE_*`, `IS_*` | `z.enum(['true','false'])` | `string` |
-| `*_URL`, `*_URI`, `*_ENDPOINT`, `*_DSN` | `z.string().url()` | `string` |
-| `required: false` in contract | `.optional()` suffix | `string \| undefined` |
-| Everything else | `z.string().min(1)` | `string` |
-=======
-<!-- coderabbit-ai-generated:v1 -->
->>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
-
 <!-- coderabbit-ai-generated-section:v1:0f386cd013e44b01dd2bad14724aed536f3c557c9cc84ef6e065a6be41190cdc -->
 
 | Name pattern (matched in order) | Zod schema | TS type |

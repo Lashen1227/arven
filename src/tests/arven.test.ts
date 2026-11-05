@@ -461,22 +461,6 @@ describe('renderTsOutput', () => {
 // ─── codegen command (integration) ───────────────────────────────────────────
 
 describe('codegen command', () => {
-<<<<<<< HEAD
-  it('creates nested output directories and excludes output-only references', async () => {
-    const dir = join(tmpdir(), `arven-codegen-nested-${Date.now()}`);
-    const output = join(dir, 'generated', 'nested', 'env.ts');
-    mkdirSync(dir);
-    writeFileSync(join(dir, 'app.ts'), 'const value = process.env.APP_KEY;\n');
-    mkdirSync(join(dir, 'generated', 'nested'), { recursive: true });
-    writeFileSync(output, 'const outputOnly = process.env.OUTPUT_ONLY;\n');
-
-    await codegen({ root: dir, output, overwrite: true, config: join(dir, '.arvenrc.json'), format: 'ts' });
-
-    const content = readFileSync(output, 'utf8');
-    assert.match(content, /APP_KEY/);
-    assert.doesNotMatch(content, /OUTPUT_ONLY/);
-    rmSync(dir, { recursive: true });
-=======
   it('creates nested output directories and drops references found only in the output', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'arven-codegen-regenerate-'));
     try {
@@ -518,7 +502,6 @@ describe('codegen command', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
->>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
   });
 
   it('generates a ts validator file with --format ts', async () => {

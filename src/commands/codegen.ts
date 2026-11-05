@@ -39,15 +39,9 @@ export async function codegen(options: CodegenOptions): Promise<void> {
 
   // Scan codebase for env vars
   const found    = await scanEnvVars(root);
-<<<<<<< HEAD
   const varNames = [...found.entries()]
     .filter(([, sources]) => ![...sources].every((source) => resolve(root, source) === outputPath))
     .map(([name]) => name);
-=======
-  const varNames = [...found].filter(([, files]) =>
-    [...files].some((file) => resolve(root, file) !== outputPath)
-  ).map(([name]) => name);
->>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
 
   // Regenerate an empty validator if the old output is the only source of references.
   if (varNames.length === 0 && found.size === 0) {
@@ -93,19 +87,11 @@ export async function codegen(options: CodegenOptions): Promise<void> {
 
   try {
     mkdirSync(dirname(outputPath), { recursive: true });
-<<<<<<< HEAD
     writeFileSync(outputPath, output, 'utf8');
   } catch (error) {
-    console.log(chalk.red(`  ✕ Could not write ${options.output}: ${error instanceof Error ? error.message : 'filesystem error'}\n`));
+    console.log(chalk.red(`  ✕ Could not create output directory or write ${options.output}: ${error instanceof Error ? error.message : 'filesystem error'}\n`));
     process.exit(1);
   }
-=======
-  } catch (error) {
-    console.log(chalk.red(`  ✕ Could not create output directory for ${options.output}: ${error instanceof Error ? error.message : String(error)}\n`));
-    process.exit(1);
-  }
-  writeFileSync(outputPath, output, 'utf8');
->>>>>>> 40c378342a99a367db8625bd6912e2ebe2f8773f
 
   console.log(
     chalk.green(`  ✓ Generated ${options.output}`) +
