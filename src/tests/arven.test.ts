@@ -1,14 +1,40 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
+import { writeFileSync, unlinkSync, mkdirSync, mkdtempSync, rmSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { runInNewContext } from 'node:vm';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import { z } from 'zod';
 import { parseEnvExample, groupByCategory, renderEnvExample } from '../utils/envParser.js';
 import { loadArvenConfig } from '../utils/configParser.js';
 import { findGitDir, installHook, uninstallHook } from '../hooks/hookManager.js';
 import { scanEnvVars } from '../scanner.js';
 import { schema } from '../commands/schema.js';
-import type { GroupedVars } from '../types.js';
+import { codegen } from '../commands/codegen.js';
+import { renderZodOutput, renderTsOutput } from '../utils/codegenRenderer.js';
+import type { GroupedVars, ArvenConfig } from '../types.js';
+
+function runGenerated(source: string, env: Record<string, string | undefined>, errors: string[] = []): Record<string, unknown> {
+  const javascript = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    reportDiagnostics: true,
+  });
+  assert.deepEqual(javascript.diagnostics, []);
+  const exports: Record<string, unknown> = {};
+  runInNewContext(javascript.outputText, {
+    exports,
+    require: (name: string) => {
+      assert.equal(name, 'zod');
+      return { z };
+    },
+    process: { env, exit: (code: number) => { throw new Error(`process.exit(${code})`); } },
+    console: { error: (message: string) => errors.push(message) },
+  });
+  return exports.env as Record<string, unknown>;
+}
 
 // ─── parseEnvExample ──────────────────────────────────────────────────────────
 
@@ -224,6 +250,331 @@ describe('hookManager', () => {
 
     const uninstallResult = uninstallHook(dir);
     assert.equal(uninstallResult.success, true);
+
+    rmSync(dir, { recursive: true });
+  });
+});
+
+// ─── renderZodOutput ──────────────────────────────────────────────────────────
+
+describe('renderZodOutput', () => {
+  const makeConfig = (overrides: Record<string, object> = {}): ArvenConfig => ({
+    variables: overrides as ArvenConfig['variables'],
+  });
+
+  it('produces a valid zod import and schema object', () => {
+    const cats: GroupedVars = new Map([['General', ['MY_VAR']]]);
+    const out = renderZodOutput(['MY_VAR'], makeConfig(), cats);
+    assert.ok(out.includes("import { z } from 'zod'"));
+    assert.ok(out.includes('_schema = z.object('));
+    assert.ok(out.includes('MY_VAR'));
+    assert.ok(out.includes('export const env'));
+    assert.ok(out.includes('export type Env'));
+  });
+
+  it('uses z.coerce.number() for PORT-style vars', () => {
+    const cats: GroupedVars = new Map([['Server', ['PORT']]]);
+    const out = renderZodOutput(['PORT'], makeConfig(), cats);
+    assert.ok(out.includes('z.coerce.number()'));
+  });
+
+  it('preprocesses empty numeric values while preserving whitespace for coercion', () => {
+    const required = renderZodOutput(['PORT'], makeConfig(), new Map());
+    const optional = renderZodOutput(['PORT'], makeConfig({ PORT: { required: false } }), new Map());
+    assert.ok(required.includes("z.preprocess((value) => value === '' ? undefined : value, z.coerce.number())"));
+    assert.ok(optional.includes("z.preprocess((value) => value === '' ? undefined : value, z.coerce.number().optional())"));
+  });
+
+  it('keeps multiline descriptions on one generated comment line', () => {
+    const out = renderZodOutput(['MY_VAR'], makeConfig({ MY_VAR: { description: 'first line\nsecond line\r\nthird' } }), new Map());
+    assert.ok(out.includes('// first line second line third'));
+  });
+
+  it('uses narrow name patterns for numeric and boolean inference', () => {
+    const names = ['PORT', 'PORTAL_URL', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS', 'ENABLE_CACHE'];
+    const out = renderZodOutput(names, makeConfig(), new Map());
+    assert.match(out, /PORT:\s+z\.preprocess/);
+    for (const name of ['PORTAL_URL', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS']) {
+      assert.match(out, new RegExp(`${name}:\\s+z\\.string`));
+    }
+    assert.match(out, /ENABLE_CACHE:\s+z\.enum/);
+  });
+
+  it('uses z.string().url() for URL-suffixed vars', () => {
+    const cats: GroupedVars = new Map([['Database', ['DATABASE_URL']]]);
+    const out = renderZodOutput(['DATABASE_URL'], makeConfig(), cats);
+    assert.ok(out.includes('z.string().url()'));
+  });
+
+  it('uses z.enum for boolean-flag vars', () => {
+    const cats: GroupedVars = new Map([['General', ['ENABLE_FEATURE']]]);
+    const out = renderZodOutput(['ENABLE_FEATURE'], makeConfig(), cats);
+    assert.ok(out.includes("z.enum(['true', 'false'])"));
+  });
+
+  it('marks optional when required === false', () => {
+    const cats: GroupedVars = new Map([['General', ['OPTIONAL_VAR']]]);
+    const cfg = makeConfig({ OPTIONAL_VAR: { required: false } });
+    const out = renderZodOutput(['OPTIONAL_VAR'], cfg, cats);
+    assert.ok(out.includes('.optional()'));
+  });
+
+  it('includes description as inline comment', () => {
+    const cats: GroupedVars = new Map([['Auth & Security', ['JWT_SECRET']]]);
+    const cfg = makeConfig({ JWT_SECRET: { description: 'Signing secret', required: true } });
+    const out = renderZodOutput(['JWT_SECRET'], cfg, cats);
+    assert.ok(out.includes('// Signing secret'));
+  });
+
+  it('keeps descriptions with line breaks on one comment line', () => {
+    const cfg = makeConfig({ TOKEN: { description: 'first\r\nsecond\rthird\nfourth\u2028fifth\u2029last' } });
+    const out = renderZodOutput(['TOKEN'], cfg, new Map());
+    assert.match(out, /\/\/ first second third fourth fifth last/);
+    assert.equal(runGenerated(out, { TOKEN: 'value' }).TOKEN, 'value');
+  });
+
+  it('treats empty numeric values like the TypeScript validator', () => {
+    const names = ['PORT', 'TIMEOUT'];
+    const cfg = makeConfig({ TIMEOUT: { required: false } });
+    for (const render of [renderZodOutput, renderTsOutput]) {
+      const out = render(names, cfg, new Map());
+      assert.throws(() => runGenerated(out, { PORT: '', TIMEOUT: '1' }));
+      assert.throws(() => runGenerated(out, { TIMEOUT: '1' }));
+      const empty = runGenerated(out, { PORT: '42', TIMEOUT: '' });
+      assert.equal(empty.PORT, 42);
+      assert.equal(empty.TIMEOUT, undefined);
+      assert.equal(runGenerated(out, { PORT: '  ', TIMEOUT: ' ' }).TIMEOUT, 0);
+      assert.throws(() => runGenerated(out, { PORT: 'not-a-number' }));
+    }
+  });
+
+  it('infers numeric and boolean types only from the supported patterns', () => {
+    const names = ['PORT', 'PORT_HTTP', 'WEB_PORT', 'TIMEOUT_MS', 'MAX_COUNT', 'CACHE_TTL',
+      'PORTAL_URL', 'RETRYABLE', 'TTLISH', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS',
+      'FEATURE_NAME', 'ENABLE_CACHE', 'DISABLE_CACHE', 'USE_CACHE', 'IS_READY'];
+    const zodOutput = renderZodOutput(names, makeConfig(), new Map());
+    const tsOutput = renderTsOutput(names, makeConfig(), new Map());
+    const line = (output: string, name: string) => output.split('\n').find((item) => item.trimStart().startsWith(`${name}:`))!;
+    for (const name of ['PORT', 'PORT_HTTP', 'WEB_PORT', 'TIMEOUT_MS', 'MAX_COUNT', 'CACHE_TTL']) {
+      assert.match(line(zodOutput, name), /z\.coerce\.number\(\)/);
+      assert.match(line(tsOutput, name), /number/);
+    }
+    for (const name of ['ENABLE_CACHE', 'DISABLE_CACHE', 'USE_CACHE', 'IS_READY']) {
+      assert.match(line(zodOutput, name), /z\.enum/);
+    }
+    for (const name of ['PORTAL_URL', 'RETRYABLE', 'TTLISH', 'DEBUG', 'SSL_CERT_FILE', 'ALLOW_ORIGINS', 'FEATURE_NAME']) {
+      assert.doesNotMatch(line(zodOutput, name), /z\.coerce\.number|z\.enum/);
+      assert.match(line(tsOutput, name), /string/);
+    }
+    assert.match(line(zodOutput, 'PORTAL_URL'), /z\.string\(\)\.url\(\)/);
+  });
+
+  it('includes arven header comment', () => {
+    const cats: GroupedVars = new Map([['General', ['FOO']]]);
+    const out = renderZodOutput(['FOO'], makeConfig(), cats);
+    assert.ok(out.includes('Generated by arven'));
+  });
+
+  it('reports only the relevant error headers for missing and invalid values', () => {
+    const out = renderTsOutput(['PORT', 'API_KEY'], makeConfig(), new Map());
+    for (const [env, missing, invalid] of [
+      [{ PORT: 'oops', API_KEY: 'key' }, false, true],
+      [{ PORT: '42' }, true, false],
+      [{ PORT: 'oops' }, true, true],
+    ] as const) {
+      const errors: string[] = [];
+      assert.throws(() => runGenerated(out, env, errors), /process.exit\(1\)/);
+      const message = errors.join('\n');
+      assert.equal(message.includes('Missing required environment variables'), missing);
+      assert.equal(message.includes('Invalid numeric environment variables'), invalid);
+      assert.match(message, /Check your environment variables/);
+    }
+  });
+
+  it('groups vars with category comments', () => {
+    const cats: GroupedVars = new Map([
+      ['Database', ['DB_URL']],
+      ['Auth & Security', ['JWT_SECRET']],
+    ]);
+    const out = renderZodOutput(['DB_URL', 'JWT_SECRET'], makeConfig(), cats);
+    assert.ok(out.includes('// Database'));
+    assert.ok(out.includes('// Auth & Security'));
+  });
+});
+
+// ─── renderTsOutput ───────────────────────────────────────────────────────────
+
+describe('renderTsOutput', () => {
+  const makeConfig = (overrides: Record<string, object> = {}): ArvenConfig => ({
+    variables: overrides as ArvenConfig['variables'],
+  });
+
+  it('produces an Env interface and validateEnv function', () => {
+    const cats: GroupedVars = new Map([['General', ['MY_VAR']]]);
+    const out = renderTsOutput(['MY_VAR'], makeConfig(), cats);
+    assert.ok(out.includes('export interface Env'));
+    assert.ok(out.includes('MY_VAR'));
+    assert.ok(out.includes('export const env'));
+    assert.ok(out.includes('validateEnv()'));
+  });
+
+  it('uses number type for PORT-style vars', () => {
+    const cats: GroupedVars = new Map([['Server', ['PORT']]]);
+    const out = renderTsOutput(['PORT'], makeConfig(), cats);
+    assert.match(out, /PORT:\s+number;/);
+  });
+
+  it('marks optional vars with | undefined', () => {
+    const cats: GroupedVars = new Map([['General', ['OPT_VAR']]]);
+    const cfg = makeConfig({ OPT_VAR: { required: false } });
+    const out = renderTsOutput(['OPT_VAR'], cfg, cats);
+    assert.ok(out.includes('| undefined'));
+  });
+
+  it('does not add missing-check for optional vars', () => {
+    const cats: GroupedVars = new Map([['General', ['OPT_VAR']]]);
+    const cfg = makeConfig({ OPT_VAR: { required: false } });
+    const out = renderTsOutput(['OPT_VAR'], cfg, cats);
+    // Optional vars should not appear in the missing.push() block
+    assert.ok(!out.includes("missing.push('OPT_VAR')"));
+  });
+
+  it('adds missing-check for required vars', () => {
+    const cats: GroupedVars = new Map([['General', ['REQ_VAR']]]);
+    const out = renderTsOutput(['REQ_VAR'], makeConfig(), cats);
+    assert.ok(out.includes("missing.push('REQ_VAR')"));
+  });
+
+  it('has no external imports', () => {
+    const cats: GroupedVars = new Map([['General', ['SOME_VAR']]]);
+    const out = renderTsOutput(['SOME_VAR'], makeConfig(), cats);
+    assert.ok(!out.includes("from '"));
+  });
+
+  it('includes arven header comment', () => {
+    const cats: GroupedVars = new Map([['General', ['FOO']]]);
+    const out = renderTsOutput(['FOO'], makeConfig(), cats);
+    assert.ok(out.includes('Generated by arven'));
+  });
+});
+
+// ─── codegen command (integration) ───────────────────────────────────────────
+
+describe('codegen command', () => {
+  it('creates nested output directories and drops references found only in the output', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arven-codegen-regenerate-'));
+    try {
+      const output = join(dir, 'generated', 'nested', 'env.ts');
+      mkdirSync(join(dir, 'src'));
+      const source = join(dir, 'src', 'env.ts');
+      writeFileSync(source, 'process.env.SHARED; process.env.STALE;\n');
+      const options = { root: dir, output, overwrite: true, config: '.arvenrc.json', format: 'ts' as const };
+      await codegen(options);
+      assert.match(readFileSync(output, 'utf8'), /STALE/);
+
+      writeFileSync(source, 'process.env.SHARED; process.env.NEW_VALUE;\n');
+      await codegen(options);
+      const regenerated = readFileSync(output, 'utf8');
+      assert.match(regenerated, /SHARED/);
+      assert.match(regenerated, /NEW_VALUE/);
+      assert.doesNotMatch(regenerated, /STALE/);
+
+      writeFileSync(source, '// no remaining references\n');
+      await codegen(options);
+      const empty = readFileSync(output, 'utf8');
+      assert.doesNotMatch(empty, /SHARED|NEW_VALUE/);
+      assert.match(empty, /export interface Env/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports directory creation failures cleanly', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'arven-codegen-directory-'));
+    try {
+      writeFileSync(join(dir, 'app.ts'), 'process.env.API_KEY;\n');
+      writeFileSync(join(dir, 'blocker'), 'not a directory');
+      const cli = fileURLToPath(new URL('../bin/arven.js', import.meta.url));
+      const result = spawnSync(process.execPath, [cli, 'codegen', '--root', dir, '--output', join(dir, 'blocker', 'env.ts'), '--format', 'ts'], { encoding: 'utf8' });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout, /Could not create output directory/);
+      assert.doesNotMatch(result.stderr, /Error:/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('generates a ts validator file with --format ts', async () => {
+    const dir    = join(tmpdir(), `arven-codegen-${Date.now()}`);
+    const output = join(dir, 'env.ts');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'server.ts'), 'const k = process.env.API_SECRET;\n');
+
+    await codegen({
+      root:      dir,
+      output,
+      overwrite: false,
+      config:    join(dir, '.arvenrc.json'), // non-existent → empty config
+      format:    'ts',
+    });
+
+    const content = readFileSync(output, 'utf8');
+    assert.ok(content.includes('export interface Env'));
+    assert.ok(content.includes('API_SECRET'));
+    assert.ok(content.includes('export const env'));
+
+    rmSync(dir, { recursive: true });
+  });
+
+  it('refuses to overwrite without --overwrite flag', async () => {
+    const dir    = join(tmpdir(), `arven-codegen-ow-${Date.now()}`);
+    const output = join(dir, 'env.ts');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'server.ts'), 'const k = process.env.SOME_KEY;\n');
+    writeFileSync(output, '// existing file\n');
+
+    let exited = false;
+    const origExit = process.exit.bind(process);
+    (process as NodeJS.Process & { exit: (code?: number) => never }).exit = ((code?: number) => {
+      exited = true;
+      throw new Error(`process.exit(${code})`);
+    }) as typeof process.exit;
+
+    try {
+      await codegen({
+        root: dir, output, overwrite: false,
+        config: join(dir, '.arvenrc.json'), format: 'ts',
+      });
+    } catch {
+      // expected — the exit throws
+    } finally {
+      (process as NodeJS.Process & { exit: (code?: number) => never }).exit = origExit as typeof process.exit;
+    }
+
+    assert.ok(exited, 'process.exit should have been called');
+    // Original file must be untouched
+    assert.equal(readFileSync(output, 'utf8'), '// existing file\n');
+
+    rmSync(dir, { recursive: true });
+  });
+
+  it('respects contract metadata from .arvenrc.json in ts format', async () => {
+    const dir    = join(tmpdir(), `arven-codegen-cfg-${Date.now()}`);
+    const output = join(dir, 'env.ts');
+    const cfgPath = join(dir, '.arvenrc.json');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'app.ts'), 'const x = process.env.WEBHOOK_PORT;\n');
+    writeFileSync(cfgPath, JSON.stringify({
+      variables: {
+        WEBHOOK_PORT: { required: true, description: 'Webhook listener port' },
+      },
+    }));
+
+    await codegen({ root: dir, output, overwrite: false, config: cfgPath, format: 'ts' });
+
+    const content = readFileSync(output, 'utf8');
+    // PORT-like name → number type in ts format
+    assert.match(content, /WEBHOOK_PORT:\s+number;/);
 
     rmSync(dir, { recursive: true });
   });
