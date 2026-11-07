@@ -8,6 +8,7 @@ const toc = [
   { label: "arven check", href: "#check" },
   { label: "arven diff", href: "#diff" },
   { label: "arven schema", href: "#schema" },
+  { label: "arven codegen", href: "#codegen" },
   { label: "arven uninstall", href: "#uninstall" },
 ];
 
@@ -118,6 +119,65 @@ arven check --require-metadata`}</DocsCodeBlock>
             {" "}Strict checks require every discovered variable to include a description and an
             explicit required or optional status.
           </p>
+        </DocsSection>
+
+        <DocsSection id="codegen" title="arven codegen">
+          <p>
+            Generate a runtime validator module from the environment variables found in your code
+            and their contracts in <code className="rounded bg-zinc-100 px-1.5 py-0.5">.arvenrc.json</code>.
+            Import the generated <code className="rounded bg-zinc-100 px-1.5 py-0.5">env.ts</code>
+            once from your application entry point to validate variables at startup.
+          </p>
+          <DocsCodeBlock>{`arven codegen
+arven codegen --format ts
+arven codegen --overwrite
+arven codegen -r ./packages/api -o ./packages/api/src/env.ts`}</DocsCodeBlock>
+          <p>
+            The default <code className="rounded bg-zinc-100 px-1.5 py-0.5">zod</code> format
+            generates a Zod schema and requires Zod to be installed in your project. Use
+            <code className="rounded bg-zinc-100 px-1.5 py-0.5">--format ts</code> for a
+            zero-dependency TypeScript validator. Both formats validate required variables and
+            coerce recognized numeric variables; the TypeScript format also reports invalid
+            numeric values.
+          </p>
+          <div className="overflow-hidden rounded-lg border border-zinc-200">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-zinc-50 text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-normal">Flag</th>
+                  <th className="px-4 py-3 font-normal">Default</th>
+                  <th className="px-4 py-3 font-normal">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200">
+                <tr>
+                  <td className="px-4 py-3 font-mono">-r, --root</td>
+                  <td className="px-4 py-3 font-mono">.</td>
+                  <td className="px-4 py-3">Project directory to scan</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono">-o, --output</td>
+                  <td className="px-4 py-3 font-mono">env.ts</td>
+                  <td className="px-4 py-3">Generated validator path</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono">-c, --config</td>
+                  <td className="px-4 py-3 font-mono">.arvenrc.json</td>
+                  <td className="px-4 py-3">Contract config, resolved from the project root</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono">-f, --format</td>
+                  <td className="px-4 py-3 font-mono">zod</td>
+                  <td className="px-4 py-3">Choose zod or ts output</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 font-mono">--overwrite</td>
+                  <td className="px-4 py-3 font-mono">false</td>
+                  <td className="px-4 py-3">Replace an existing output file</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </DocsSection>
 
         <DocsSection id="uninstall" title="arven uninstall">
