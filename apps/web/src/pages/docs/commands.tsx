@@ -137,8 +137,9 @@ arven codegen -r ./packages/api -o ./packages/api/src/env.ts`}</DocsCodeBlock>
             generates a Zod schema and requires Zod to be installed in your project. Use
             <code className="rounded bg-zinc-100 px-1.5 py-0.5">--format ts</code> for a
             zero-dependency TypeScript validator. Both formats validate required variables and
-            coerce recognized numeric variables; the TypeScript format also reports invalid
-            numeric values.
+            coerce recognized numeric variables. Both reject values that cannot be coerced to
+            numbers. The Zod format also validates recognized URLs and restricts recognized
+            boolean values to true or false.
           </p>
           <div className="overflow-hidden rounded-lg border border-zinc-200">
             <table className="w-full text-left text-sm">
